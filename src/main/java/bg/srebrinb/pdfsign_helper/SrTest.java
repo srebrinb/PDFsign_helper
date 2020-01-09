@@ -161,10 +161,6 @@ public class SrTest {
         externalSigning.setSignature(cmsSignature);
     }
 
-    /**
-     * @see #signAndLockExistingFieldWithLock(PDDocument, OutputStream,
-     * SignatureInterface)
-     */
     boolean lockFields(List<PDField> fields, Predicate<PDField> shallBeLocked) {
         boolean isUpdated = false;
         if (fields != null) {
