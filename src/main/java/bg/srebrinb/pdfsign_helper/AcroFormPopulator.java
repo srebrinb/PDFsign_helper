@@ -93,7 +93,10 @@ public class AcroFormPopulator {
         while (fields.hasNext()) {
             System.out.println("name:" + fields.next().getPartialName());
         }
-
+PDFont formFont = PDType0Font.load(document, new FileInputStream("fonts/arial.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+                //    PDResources res = acroForm.getDefaultResources(); // could be null, if so, then create it with the setter
+                    String fontName = res.add(acroForm).getName();
+                   String defaultAppearanceString = "/" + fontName + " 0 Tf 0 g";
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
             System.out.println("key " + key + "= " + item.getValue());
@@ -104,12 +107,9 @@ public class AcroFormPopulator {
                 if (field instanceof PDTextField) {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
                     PDTextField textBox = (PDTextField) field;
-//                    
-//                    PDFont formFont = PDType0Font.load(document, new FileInputStream("fonts/arial.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
-//                    PDResources res = acroForm.getDefaultResources(); // could be null, if so, then create it with the setter
-//                    String fontName = res.add(formFont).getName();
-//                    String defaultAppearanceString = "/" + fontName + " 0 Tf 0 g"; // adjust to replace existing font name
-//                    textBox.setDefaultAppearance(defaultAppearanceString);
+                    
+                     // adjust to replace existing font name
+                    textBox.setDefaultAppearance(defaultAppearanceString);
 
                     textBox.setValue(item.getValue());
 
