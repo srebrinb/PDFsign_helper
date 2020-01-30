@@ -1,14 +1,15 @@
 package bg.srebrinb.pdfsign_helper;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSDictionary;
@@ -18,14 +19,21 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDPushButton;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
  * <a href="https://stackoverflow.com/questions/46799087/how-to-insert-image-programmatically-in-to-acroform-field-using-java-pdfbox">
@@ -35,7 +43,8 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
  * This utility class is from Renat Gatin's answer to the question linked above.
  * </p>
  * <p>
- * A flag parameter <code>flatten</code> was added to <code>populateAndCopy</code> to allow deciding whether or not to flatten the
+ * A flag parameter <code>flatten</code> was added to
+ * <code>populateAndCopy</code> to allow deciding whether or not to flatten the
  * form.
  * </p>
  *
@@ -43,26 +52,35 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
  */
 public class AcroFormPopulator {
 
+    Map<String, String> getData(String file) {
+        JSONParser parser = new JSONParser();
+        Map<String, String> data = new HashMap<>();
+        try {
+
+            Object obj = parser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) obj;
+            JSONObject formDataObj = (JSONObject) jsonObject.get("data");
+
+            formDataObj.keySet().forEach(new Consumer() {
+                @Override
+                public void accept(Object keySet) {
+                    data.put((String) keySet, (String) formDataObj.get(keySet));
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
     public static void main(String[] args) {
         AcroFormPopulator abd = new AcroFormPopulator();
         try {
-            /* Map<String, String> data = new HashMap<>();
-            data.put("firstName", "Mike");
-            data.put("lastName", "Taylor");
-            data.put("dateTime", (new Date()).toString());
-            data.put("photo_af_image", "photo1.jpg");
-            data.put("photo2_af_image", "photo2.jpg");
-            data.put("photo3_af_image", "photo3.jpg");
-             */
-            
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, String> data = new HashMap<String, String>();
-            String json="{'person_firstName':''}";
-// convert JSON string to Map
-            data = mapper.readValue(json, new TypeReference<Map<String, Object>>() {
-            });            
-            abd.populateAndCopy("test.pdf", "generated.pdf", data, true);
-        } catch (IOException e) {
+
+            Map<String, String> data = abd.getData("data.json");
+            abd.populateAndCopy("form.pdf", "generated.pdf", data, true);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -71,16 +89,30 @@ public class AcroFormPopulator {
         File file = new File(originalPdf);
         PDDocument document = PDDocument.load(file);
         PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
+        Iterator<PDField> fields = acroForm.getFieldIterator();
+        while (fields.hasNext()) {
+            System.out.println("name:" + fields.next().getPartialName());
+        }
 
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
+            System.out.println("key " + key + "= " + item.getValue());
             PDField field = acroForm.getField(key);
             if (field != null) {
                 System.out.print("Form field with placeholder name: '" + key + "' found");
 
                 if (field instanceof PDTextField) {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
-                    field.setValue(item.getValue());
+                    PDTextField textBox = (PDTextField) field;
+//                    
+//                    PDFont formFont = PDType0Font.load(document, new FileInputStream("fonts/arial.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+//                    PDResources res = acroForm.getDefaultResources(); // could be null, if so, then create it with the setter
+//                    String fontName = res.add(formFont).getName();
+//                    String defaultAppearanceString = "/" + fontName + " 0 Tf 0 g"; // adjust to replace existing font name
+//                    textBox.setDefaultAppearance(defaultAppearanceString);
+
+                    textBox.setValue(item.getValue());
+
                     System.out.println("value is set to: '" + item.getValue() + "'");
 
                 } else if (field instanceof PDPushButton) {
@@ -130,8 +162,13 @@ public class AcroFormPopulator {
                     } else {
                         System.err.println("Missconfiguration of placeholder: '" + key + "' - no widgets(actions) found");
                     }
+                } else if (field instanceof PDCheckBox) {
+                    if (item.getValue().endsWith("true")) {
+                        ((PDCheckBox) field).check();
+                    }
                 } else {
-                    System.err.print("Unexpected form field type found with placeholder name: '" + key + "'");
+                    System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
+                            + field.getFieldType());
                 }
             } else {
                 System.err.println("No field found with name:" + key);
