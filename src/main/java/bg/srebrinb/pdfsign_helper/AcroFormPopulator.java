@@ -94,13 +94,13 @@ public class AcroFormPopulator {
             System.out.println("name:" + fields.next().getPartialName());
         }
         //    PDFont font = PDType1Font.COURIER;
-        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ARIALNB.TTF"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/arialbd.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
 
         PDResources resources = new PDResources();
         resources.put(COSName.getPDFName("Helv"), font);
 
         acroForm.setDefaultResources(resources);
-        String defaultAppearanceString = "/Helv 0 Tf 0 g";
+        String defaultAppearanceString = "/Helv 7 Tf 0 g";
         acroForm.setDefaultAppearance(defaultAppearanceString);
 
         for (Map.Entry<String, String> item : data.entrySet()) {
@@ -115,10 +115,10 @@ public class AcroFormPopulator {
                     PDTextField textBox = (PDTextField) field;
 
                     // adjust to replace existing font name
-                    //       textBox.setDefaultAppearance(defaultAppearanceString);
+                    textBox.setDefaultAppearance(defaultAppearanceString);
                     textBox.setValue(item.getValue());
                     textBox.setReadOnly(true);
-                    textBox.setFieldFlags(1);
+                    
                     //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
