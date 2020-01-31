@@ -94,12 +94,12 @@ public class AcroFormPopulator {
             System.out.println("name:" + fields.next().getPartialName());
         }
         //    PDFont font = PDType1Font.COURIER;
-        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/arialbd.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ariblk.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
         PDResources resources = new PDResources();
-        resources.put(COSName.getPDFName("Helv"), font);
+        resources.put(COSName.getPDFName("arialbd"), font);
 
         acroForm.setDefaultResources(resources);
-        String defaultAppearanceString = "/Helv 8 Tf 0 g";
+        String defaultAppearanceString = "/arialbd 7 Tf 0 g";
         acroForm.setDefaultAppearance(defaultAppearanceString);
 
         for (Map.Entry<String, String> item : data.entrySet()) {
