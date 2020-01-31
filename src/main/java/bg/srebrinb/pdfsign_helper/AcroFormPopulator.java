@@ -94,7 +94,7 @@ public class AcroFormPopulator {
             System.out.println("name:" + fields.next().getPartialName());
         }
         //    PDFont font = PDType1Font.COURIER;
-        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/arialbd.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ARIALNB.TTF"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
 
         PDResources resources = new PDResources();
         resources.put(COSName.getPDFName("Helv"), font);
@@ -118,6 +118,7 @@ public class AcroFormPopulator {
                     //       textBox.setDefaultAppearance(defaultAppearanceString);
                     textBox.setValue(item.getValue());
                     textBox.setReadOnly(true);
+                    textBox.setFieldFlags(1);
                     //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
