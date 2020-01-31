@@ -21,6 +21,7 @@ import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
@@ -43,8 +44,7 @@ import org.json.simple.parser.JSONParser;
  * This utility class is from Renat Gatin's answer to the question linked above.
  * </p>
  * <p>
- * A flag parameter <code>flatten</code> was added to
- * <code>populateAndCopy</code> to allow deciding whether or not to flatten the
+ * A flag parameter <code>flatten</code> was added to <code>populateAndCopy</code> to allow deciding whether or not to flatten the
  * form.
  * </p>
  *
@@ -79,7 +79,7 @@ public class AcroFormPopulator {
         try {
 
             Map<String, String> data = abd.getData("data.json");
-            abd.populateAndCopy("form.pdf", "generated.pdf", data, true);
+            abd.populateAndCopy("form.pdf", "generated.pdf", data, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -93,78 +93,36 @@ public class AcroFormPopulator {
         while (fields.hasNext()) {
             System.out.println("name:" + fields.next().getPartialName());
         }
-PDFont formFont = PDType0Font.load(document, new FileInputStream("fonts/arial.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
-                //    PDResources res = acroForm.getDefaultResources(); // could be null, if so, then create it with the setter
-                    String fontName = res.add(acroForm).getName();
-                   String defaultAppearanceString = "/" + fontName + " 0 Tf 0 g";
+        //    PDFont font = PDType1Font.COURIER;
+        PDFont font = PDType0Font.load(document, new FileInputStream("fonts/arialbd.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+
+        PDResources resources = new PDResources();
+        resources.put(COSName.getPDFName("Helv"), font);
+
+        acroForm.setDefaultResources(resources);
+        String defaultAppearanceString = "/Helv 0 Tf 0 g";
+        acroForm.setDefaultAppearance(defaultAppearanceString);
+
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
             System.out.println("key " + key + "= " + item.getValue());
             PDField field = acroForm.getField(key);
             if (field != null) {
-                System.out.print("Form field with placeholder name: '" + key + "' found");
+               // System.out.print("Form field with placeholder name: '" + key + "' found");
 
                 if (field instanceof PDTextField) {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
                     PDTextField textBox = (PDTextField) field;
-                    
-                     // adjust to replace existing font name
-                    textBox.setDefaultAppearance(defaultAppearanceString);
 
+                    // adjust to replace existing font name
+                    //       textBox.setDefaultAppearance(defaultAppearanceString);
                     textBox.setValue(item.getValue());
-
-                    System.out.println("value is set to: '" + item.getValue() + "'");
-
-                } else if (field instanceof PDPushButton) {
-                    System.out.println("(type: " + field.getClass().getSimpleName() + ")");
-                    PDPushButton pdPushButton = (PDPushButton) field;
-
-                    List<PDAnnotationWidget> widgets = pdPushButton.getWidgets();
-                    if (widgets != null && widgets.size() > 0) {
-                        PDAnnotationWidget annotationWidget = widgets.get(0); // just need one widget
-
-                        String filePath = item.getValue();
-                        File imageFile = new File(filePath);
-
-                        if (imageFile.exists()) {
-                            /*
-                             * BufferedImage bufferedImage = ImageIO.read(imageFile); 
-                             * PDImageXObject pdImageXObject = LosslessFactory.createFromImage(document, bufferedImage);
-                             */
-                            PDImageXObject pdImageXObject = PDImageXObject.createFromFile(filePath, document);
-                            float imageScaleRatio = (float) pdImageXObject.getHeight() / (float) pdImageXObject.getWidth();
-
-                            PDRectangle buttonPosition = getFieldArea(pdPushButton);
-                            float height = buttonPosition.getHeight();
-                            float width = height / imageScaleRatio;
-                            float x = buttonPosition.getLowerLeftX();
-                            float y = buttonPosition.getLowerLeftY();
-
-                            PDAppearanceStream pdAppearanceStream = new PDAppearanceStream(document);
-                            pdAppearanceStream.setResources(new PDResources());
-                            try (PDPageContentStream pdPageContentStream = new PDPageContentStream(document, pdAppearanceStream)) {
-                                pdPageContentStream.drawImage(pdImageXObject, x, y, width, height);
-                            }
-                            pdAppearanceStream.setBBox(new PDRectangle(x, y, width, height));
-
-                            PDAppearanceDictionary pdAppearanceDictionary = annotationWidget.getAppearance();
-                            if (pdAppearanceDictionary == null) {
-                                pdAppearanceDictionary = new PDAppearanceDictionary();
-                                annotationWidget.setAppearance(pdAppearanceDictionary);
-                            }
-
-                            pdAppearanceDictionary.setNormalAppearance(pdAppearanceStream);
-                            System.out.println("Image '" + filePath + "' inserted");
-
-                        } else {
-                            System.err.println("File " + filePath + " not found");
-                        }
-                    } else {
-                        System.err.println("Missconfiguration of placeholder: '" + key + "' - no widgets(actions) found");
-                    }
+                    textBox.setReadOnly(true);
+                    //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
                         ((PDCheckBox) field).check();
+                        field.setReadOnly(true);
                     }
                 } else {
                     System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
