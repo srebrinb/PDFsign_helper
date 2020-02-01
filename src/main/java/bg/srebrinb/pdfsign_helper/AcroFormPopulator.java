@@ -1,9 +1,11 @@
 package bg.srebrinb.pdfsign_helper;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,8 +58,9 @@ public class AcroFormPopulator {
         JSONParser parser = new JSONParser();
         Map<String, String> data = new HashMap<>();
         try {
+            BufferedReader bufferedReader =new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+            Object obj = parser.parse(bufferedReader);
 
-            Object obj = parser.parse(new FileReader(file));
             JSONObject jsonObject = (JSONObject) obj;
             JSONObject formDataObj = (JSONObject) jsonObject.get("data");
 

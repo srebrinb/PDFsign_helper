@@ -2,22 +2,22 @@
    "signatureInx":1,
    "data":{ 
       "inc_num":"1234",
-      "person_firstName":"ÑĞÅÁĞÈÍ",
-      "person_surname":"ÁÎÍ×ÅÂ",
-      "person_familyName":"ÈÂÀÍÎÂ",
+      "person_firstName":"Ğ¡Ğ Ğ•Ğ‘Ğ Ğ˜Ğ",
+      "person_surname":"Ğ‘ĞĞĞ§Ğ•Ğ’",
+      "person_familyName":"Ğ˜Ğ’ĞĞĞĞ’",
       "person_EGN":"74090123456",
       "person_idCard_num":"645001000",
       "person_issuerDate":"2014.01.11",
-      "person_issuerName":"ÑÄÂĞ",
-      "person_permDistrict":"ÑÎÔÈß",
-      "person_permMunicipality":"ÑÒÎËÈ×ÍÀ",
+      "person_issuerName":"Ğ¡Ğ”Ğ’Ğ ",
+      "person_permDistrict":"Ğ¡ĞĞ¤Ğ˜Ğ¯",
+      "person_permMunicipality":"Ğ¡Ğ¢ĞĞ›Ğ˜Ğ§ĞĞ",
       "person_permZipCode":"1680",
-      "person_permAddress":"ÃĞ.ÑÎÔÈß Îáù.ÑÒÎËÈ×ÍÀ Îáë.ÑÎÔÈß ÓË.ÒÎÏËÈ ÄÎË 10",
+      "person_permAddress":"Ğ“Ğ .Ğ¡ĞĞ¤Ğ˜Ğ¯ ĞĞ±Ñ‰.Ğ¡Ğ¢ĞĞ›Ğ˜Ğ§ĞĞ ĞĞ±Ğ».Ğ¡ĞĞ¤Ğ˜Ğ¯ Ğ£Ğ›.Ğ¢ĞĞŸĞ›Ğ˜ Ğ”ĞĞ› 10",
       "person_phone":"+55509020303",
       "Cb_1_1":"true",
       "Cb_1_2":"false",
       "Cb_4_2":"true",
       "person_email":"test@example.com",
-      "person_currAddress":"ÃĞ.ÑÎÔÈß Îáù.ÑÒÎËÈ×ÍÀ Îáë.ÑÎÔÈß ÓË.ÒÎÏËÈ ÄÎË 10"
+      "person_currAddress":"Ğ“Ğ .Ğ¡ĞĞ¤Ğ˜Ğ¯ ĞĞ±Ñ‰.Ğ¡Ğ¢ĞĞ›Ğ˜Ğ§ĞĞ ĞĞ±Ğ».Ğ¡ĞĞ¤Ğ˜Ğ¯ Ğ£Ğ›.Ğ¢ĞĞŸĞ›Ğ˜ Ğ”ĞĞ› 10"
    }
 }
