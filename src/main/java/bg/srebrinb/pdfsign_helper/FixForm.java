@@ -45,7 +45,7 @@ public class FixForm {
                 textBox.setDefaultAppearance(defaultAppearanceString);
             }
         }
-        acroForm.setNeedAppearances(true);
+        //acroForm.setNeedAppearances(true);
         document.save("fixForm.pdf");
 
     }

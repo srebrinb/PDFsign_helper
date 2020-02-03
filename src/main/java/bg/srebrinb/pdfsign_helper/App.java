@@ -18,12 +18,22 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -32,10 +42,12 @@ import org.json.simple.parser.JSONParser;
  * @author sbalabanov
  */
 public class App {
+
     private PDDocument document;
+
     public static void main(String[] args) throws IOException {
-        String dataFile="data.json";
-        App app=new App();
+        String dataFile = "data.json";
+        App app = new App();
         File file = new File("fixForm.pdf");
         app.document = PDDocument.load(file);
         Map<String, String> data = app.getData(dataFile);
@@ -46,11 +58,12 @@ public class App {
 
         //fillForm.addFontDefaultResources(fontFile, sizeFont);        
         PDDocument result = fillForm.populate(data, flatten);
-        ByteArrayOutputStream tmp=new ByteArrayOutputStream();
+        ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         result.save(tmp);
-        PDDocument tmpPDD=PDDocument.load(tmp.toByteArray());
-        Long signatureInx=app.getSignIdx(dataFile);
-        String reason = "reason Text";        
+        result.close();
+        PDDocument tmpPDD = PDDocument.load(tmp.toByteArray());
+        Long signatureInx = app.getSignIdx(dataFile);
+        String reason = "reason Text";
         SignAndLockExistingField signAndLockExistingField = new SignAndLockExistingField(tmpPDD);
         try {
             signAndLockExistingField.setKeyStore("test.pfx", "1234".toCharArray());
@@ -68,10 +81,10 @@ public class App {
         OutputStream output = new FileOutputStream("sign_1.pdf");
         signAndLockExistingField.signAndLock(signatureInx.intValue(), reason, output);
         output.close();
-        
-        dataFile="data2.json";
+
+        dataFile = "data2.json";
         data = app.getData(dataFile);
-        signatureInx=app.getSignIdx(dataFile);
+        signatureInx = app.getSignIdx(dataFile);
         /*
         fillForm.setDocument(PDDocument.load(new File("sign_1.pdf")));
         result = fillForm.populate(data, flatten);
@@ -79,42 +92,75 @@ public class App {
         result.save(tmp);
         result.save("tmp2.pdf");
         tmpPDD=PDDocument.load(tmp.toByteArray());
-        */
-        
-        tmpPDD=PDDocument.load(new File("sign_1.pdf"));
-        
-        
-        
+         */
+
+        tmpPDD = PDDocument.load(new File("sign_1.pdf"));
+/*
         tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_num").setValue("2-123456");
         tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_date").setValue("2020-02-03");
         tmpPDD.getDocumentCatalog().getAcroForm().getField("еmployee_Name").setValue("Петър Тодоров");
         tmpPDD.getDocumentCatalog().getAcroForm().getField("еmployee_Pos").setValue("123456");
-      //  tmpPDD.getDocumentCatalog().getAcroForm().setNeedAppearances(true);
+        tmpPDD.getDocumentCatalog().getAcroForm().setNeedAppearances(true);
+*/
+setField(tmpPDD,"inc_num","2-123456");
+        //  tmpPDD.getDocumentCatalog().getAcroForm().refreshAppearances();
+        // tmpPDD.save("tmp2.pdf");
         OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
-        tmpPDD.save(outputTmp);
+        tmpPDD.saveIncremental(outputTmp);
+        // tmpPDD.close();
         outputTmp.close();
-        tmpPDD=PDDocument.load(new File("tmp2.pdf"));
+        //    tmpPDD=PDDocument.load(new File("tmp2.pdf"));
         signAndLockExistingField.setDocument(tmpPDD);
         output = new FileOutputStream("sign_2.pdf");
         signAndLockExistingField.signAndLock(signatureInx.intValue(), reason, output);
         output.close();
-        
+
     }
+
+    public static void setField(PDDocument pdfDocument, String name, String Value) throws IOException {
+        PDDocumentCatalog docCatalog = pdfDocument.getDocumentCatalog();
+        PDAcroForm acroForm = docCatalog.getAcroForm();
+        PDField field = acroForm.getField(name);
+
+        if (field instanceof PDCheckBox) {
+            field.setValue("Yes");
+        } else if (field instanceof PDTextField) {
+            System.out.println("Original value: " + field.getValueAsString());
+            field.setValue(Value);
+            System.out.println("New value: " + field.getValueAsString());
+        } else {
+            System.out.println("Nie znaleziono pola");
+        }
+
+        // vvv--- new 
+        COSDictionary fieldDictionary = field.getCOSObject();
+        COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
+        dictionary.setNeedToBeUpdated(true);
+        COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+        stream.setNeedToBeUpdated(true);
+        while (fieldDictionary != null) {
+            fieldDictionary.setNeedToBeUpdated(true);
+            fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+        }
+        // ^^^--- new 
+    }
+
     Long getSignIdx(String file) {
         JSONParser parser = new JSONParser();
-        Long signatureInx =null;
+        Long signatureInx = null;
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
             Object obj = parser.parse(bufferedReader);
 
             JSONObject jsonObject = (JSONObject) obj;
-            signatureInx = (Long) jsonObject.get("signatureInx");            
+            signatureInx = (Long) jsonObject.get("signatureInx");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         return signatureInx;
     }
+
     Map<String, String> getData(String file) {
         JSONParser parser = new JSONParser();
         Map<String, String> data = new HashMap<>();

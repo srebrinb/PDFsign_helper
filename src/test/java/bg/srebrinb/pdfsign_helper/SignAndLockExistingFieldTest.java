@@ -9,7 +9,6 @@ import static bg.srebrinb.pdfsign_helper.FillFormTest.document;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.After;
@@ -17,7 +16,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -60,7 +58,7 @@ public class SignAndLockExistingFieldTest {
         OutputStream output = new FileOutputStream("sign_person.pdf");
         instance.signAndLock(signatureInx, reason, output);
         output.close();
-        File file = new File("sign_person1.pdf");
+        File file = new File("sign_1_acrob.pdf");
         document = PDDocument.load(file);        
         instance = new SignAndLockExistingField(document);
         instance.setKeyStore("test.pfx", "1234".toCharArray());
