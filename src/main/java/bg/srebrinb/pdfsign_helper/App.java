@@ -103,6 +103,9 @@ public class App {
         tmpPDD.getDocumentCatalog().getAcroForm().setNeedAppearances(true);
 */
 setField(tmpPDD,"inc_num","2-123456");
+setField(tmpPDD,"inc_date","020-02-036");
+setField(tmpPDD,"еmployee_Name","Петър Тодоров");
+setField(tmpPDD,"еmployee_Pos","123456");
         //  tmpPDD.getDocumentCatalog().getAcroForm().refreshAppearances();
         // tmpPDD.save("tmp2.pdf");
         OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
