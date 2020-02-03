@@ -53,7 +53,7 @@ public class FillForm {
         while (fields.hasNext()) {
             System.out.println("name:" + fields.next().getPartialName());
         }
-        acroForm.setDefaultAppearance(defaultAppearanceString);
+      //  acroForm.setDefaultAppearance(defaultAppearanceString);
 
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
@@ -64,19 +64,21 @@ public class FillForm {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
                     PDTextField textBox = (PDTextField) field;
 
-                    // adjust to replace existing font name
+                    /*
                     if (null != defaultAppearanceString) {
                         textBox.setDefaultAppearance(defaultAppearanceString);
                     }
+                    */
+                    
                     textBox.setValue(item.getValue());
-                    textBox.setReadOnly(true);
+                 //   textBox.setReadOnly(true);
 
                     //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
                         ((PDCheckBox) field).check();                        
                     }
-                    field.setReadOnly(true);
+                    //field.setReadOnly(true);
                 } else {
                     System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
                             + field.getFieldType());

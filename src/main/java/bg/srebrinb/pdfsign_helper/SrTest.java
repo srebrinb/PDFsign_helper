@@ -119,7 +119,13 @@ public class SrTest {
         try (InputStream resource = new FileInputStream("generated.pdf");
                 OutputStream result = new FileOutputStream("3_sign.pdf");
                 PDDocument pdDocument = PDDocument.load(resource)) {
+            List<PDField> field = pdDocument.getDocumentCatalog().getAcroForm().getFields();
+            for (PDField pDField : field) {
+                System.out.println("pDField = " + pDField);
+            }
 
+            //     pdDocument.getDocumentCatalog().getAcroForm().getField("Text3").setValue("Text3");
+            //     pdDocument.getDocumentCatalog().getAcroForm().getField("Text2").setValue("Text2");
             t.signAndLockExistingFieldWithLock(pdDocument, result, data -> t.signWithSeparatedHashing(data));
         }
     }

@@ -36,7 +36,7 @@ public class App {
     public static void main(String[] args) throws IOException {
         String dataFile="data.json";
         App app=new App();
-        File file = new File("form.pdf");
+        File file = new File("fixForm.pdf");
         app.document = PDDocument.load(file);
         Map<String, String> data = app.getData(dataFile);
         boolean flatten = false;
@@ -44,7 +44,7 @@ public class App {
         String fontFile = "fonts/ariblk.ttf";
         int sizeFont = 7;
 
-        fillForm.addFontDefaultResources(fontFile, sizeFont);        
+        //fillForm.addFontDefaultResources(fontFile, sizeFont);        
         PDDocument result = fillForm.populate(data, flatten);
         ByteArrayOutputStream tmp=new ByteArrayOutputStream();
         result.save(tmp);
@@ -72,13 +72,28 @@ public class App {
         dataFile="data2.json";
         data = app.getData(dataFile);
         signatureInx=app.getSignIdx(dataFile);
-        
+        /*
         fillForm.setDocument(PDDocument.load(new File("sign_1.pdf")));
         result = fillForm.populate(data, flatten);
         tmp=new ByteArrayOutputStream();
         result.save(tmp);
         result.save("tmp2.pdf");
         tmpPDD=PDDocument.load(tmp.toByteArray());
+        */
+        
+        tmpPDD=PDDocument.load(new File("sign_1.pdf"));
+        
+        
+        
+        tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_num").setValue("2-123456");
+        tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_date").setValue("2020-02-03");
+        tmpPDD.getDocumentCatalog().getAcroForm().getField("еmployee_Name").setValue("Петър Тодоров");
+        tmpPDD.getDocumentCatalog().getAcroForm().getField("еmployee_Pos").setValue("123456");
+      //  tmpPDD.getDocumentCatalog().getAcroForm().setNeedAppearances(true);
+        OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
+        tmpPDD.save(outputTmp);
+        outputTmp.close();
+        tmpPDD=PDDocument.load(new File("tmp2.pdf"));
         signAndLockExistingField.setDocument(tmpPDD);
         output = new FileOutputStream("sign_2.pdf");
         signAndLockExistingField.signAndLock(signatureInx.intValue(), reason, output);
