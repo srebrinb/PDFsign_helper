@@ -11,8 +11,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
@@ -108,5 +111,32 @@ public class FillForm {
      */
     public void setDocument(PDDocument document) {
         this.document = document;
+    }
+     public static void setField(PDDocument pdfDocument, String name, String Value) throws IOException {
+        PDDocumentCatalog docCatalog = pdfDocument.getDocumentCatalog();
+        PDAcroForm acroForm = docCatalog.getAcroForm();
+        PDField field = acroForm.getField(name);
+
+        if (field instanceof PDCheckBox) {
+            field.setValue("Yes");
+        } else if (field instanceof PDTextField) {
+            System.out.println("Original value: " + field.getValueAsString());
+            field.setValue(Value);
+            System.out.println("New value: " + field.getValueAsString());
+        } else {
+            System.out.println("Nie znaleziono pola");
+        }
+
+        // vvv--- new 
+        COSDictionary fieldDictionary = field.getCOSObject();
+        COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
+        dictionary.setNeedToBeUpdated(true);
+        COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+        stream.setNeedToBeUpdated(true);
+        while (fieldDictionary != null) {
+            fieldDictionary.setNeedToBeUpdated(true);
+            fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+        }
+        // ^^^--- new 
     }
 }
