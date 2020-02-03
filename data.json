@@ -1,7 +1,6 @@
 { 
    "signatureInx":1,
-   "data":{ 
-      "inc_num":"1234",
+   "data":{       
       "person_firstName":"СРЕБРИН",
       "person_surname":"БОНЧЕВ",
       "person_familyName":"ИВАНОВ",
@@ -18,6 +17,8 @@
       "Cb_1_2":"false",
       "Cb_4_2":"true",
       "person_email":"test@example.com",
-      "person_currAddress":"ГР.СОФИЯ Общ.СТОЛИЧНА Обл.СОФИЯ УЛ.ТОПЛИ ДОЛ 10"
+      "person_currAddress":"ГР.СОФИЯ Общ.СТОЛИЧНА Обл.СОФИЯ УЛ.ТОПЛИ ДОЛ 10",
+      "old_POK":"ПОК 'Доверие' АД",
+      "old_fund":"УПД 'Доверие'",
    }
 }

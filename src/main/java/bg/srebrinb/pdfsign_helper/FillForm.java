@@ -60,8 +60,6 @@ public class FillForm {
             System.out.println("key " + key + "= " + item.getValue());
             PDField field = acroForm.getField(key);
             if (field != null) {
-                // System.out.print("Form field with placeholder name: '" + key + "' found");
-
                 if (field instanceof PDTextField) {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
                     PDTextField textBox = (PDTextField) field;
@@ -76,9 +74,9 @@ public class FillForm {
                     //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
-                        ((PDCheckBox) field).check();
-                        field.setReadOnly(true);
+                        ((PDCheckBox) field).check();                        
                     }
+                    field.setReadOnly(true);
                 } else {
                     System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
                             + field.getFieldType());

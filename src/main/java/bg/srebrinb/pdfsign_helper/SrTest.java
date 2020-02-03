@@ -5,7 +5,10 @@
  */
 package bg.srebrinb.pdfsign_helper;
 
+import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,6 +26,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -36,20 +40,38 @@ import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.common.PDStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSupport;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
+import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureOptions;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDSignatureField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTerminalField;
+import org.apache.pdfbox.util.Matrix;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.CMSAttributes;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -71,9 +93,9 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
  */
 public class SrTest {
 
-    public static final String KEYSTORE = "keystores/demo-rsa2048.ks";
-    public static final char[] PASSWORD = "demo-rsa2048".toCharArray();
-
+    public static final String KEYSTORE = "test.pfx";
+    public static final char[] PASSWORD = "1234".toCharArray();
+    private File imageFile;
     public static KeyStore ks = null;
     public static PrivateKey pk = null;
     public static Certificate[] chain = null;
@@ -84,33 +106,30 @@ public class SrTest {
 
     public static void main(String[] args) throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
         SrTest t = new SrTest();
+        t.imageFile = new File("CertBG.png");
         BouncyCastleProvider bcp = new BouncyCastleProvider();
         Security.addProvider(bcp);
         //Security.insertProviderAt(bcp, 1);
 
-        ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks = KeyStore.getInstance("PKCS12");
         ks.load(new FileInputStream(KEYSTORE), PASSWORD);
         String alias = (String) ks.aliases().nextElement();
         pk = (PrivateKey) ks.getKey(alias, PASSWORD);
         chain = ks.getCertificateChain(alias);
-        try (InputStream resource = new FileInputStream("/home/srebrin/Documents/junk/2_sign.pdf");
-                OutputStream result = new FileOutputStream(new File("/home/srebrin/Documents/junk/", "3_sign.pdf"));
+        try (InputStream resource = new FileInputStream("generated.pdf");
+                OutputStream result = new FileOutputStream("3_sign.pdf");
                 PDDocument pdDocument = PDDocument.load(resource)) {
-            List<PDField> field = pdDocument.getDocumentCatalog().getAcroForm().getFields();
-            for (PDField pDField : field) {
-                System.out.println("pDField = " + pDField);
-            }
 
-            pdDocument.getDocumentCatalog().getAcroForm().getField("Text3").setValue("Text3");
-            pdDocument.getDocumentCatalog().getAcroForm().getField("Text2").setValue("Text2");
             t.signAndLockExistingFieldWithLock(pdDocument, result, data -> t.signWithSeparatedHashing(data));
         }
     }
 
     void signAndLockExistingFieldWithLock(PDDocument document, OutputStream output, SignatureInterface signatureInterface) throws IOException {
-        PDSignatureField signatureField = document.getSignatureFields().get(2);
+        PDSignatureField signatureField = document.getSignatureFields().get(0);
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
+        PDRectangle rect = null;
+        rect = signatureField.getWidgets().get(0).getRectangle();
 
         COSBase lock = signatureField.getCOSObject().getDictionaryObject(COS_NAME_LOCK);
         if (lock instanceof COSDictionary) {
@@ -148,11 +167,22 @@ public class SrTest {
 
         signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE);
         signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);
-        signature.setName("blablabla");
-        signature.setLocation("blablabla");
+        X509Certificate cert = (X509Certificate) chain[0];
+        // https://stackoverflow.com/questions/2914521/
+        X500Name x500Name = new X500Name(cert.getSubjectX500Principal().getName());
+        RDN cn = x500Name.getRDNs(BCStyle.CN)[0];
+        String name = IETFUtils.valueToString(cn.getFirst().getValue());
+        signature.setName(name);
+        //signature.setLocation("blablabla");
         signature.setReason("blablabla");
         signature.setSignDate(Calendar.getInstance());
-        document.addSignature(signature);
+
+        // register signature dictionary and sign interface
+        SignatureOptions signatureOptions = new SignatureOptions();
+        signatureOptions.setVisualSignature(createVisualSignatureTemplate(document, 0, rect, signature));
+        signatureOptions.setPage(0);
+
+        document.addSignature(signature, signatureInterface, signatureOptions);
         ExternalSigningSupport externalSigning
                 = document.saveIncrementalForExternalSigning(output);
         // invoke external signature service
@@ -233,4 +263,115 @@ public class SrTest {
         }
     }
 
+    private InputStream createVisualSignatureTemplate(PDDocument srcDoc, int pageNum,
+            PDRectangle rect, PDSignature signature) throws IOException {
+        try (PDDocument doc = new PDDocument()) {
+            PDPage page = new PDPage(srcDoc.getPage(pageNum).getMediaBox());
+            doc.addPage(page);
+            PDAcroForm acroForm = new PDAcroForm(doc);
+            doc.getDocumentCatalog().setAcroForm(acroForm);
+            PDSignatureField signatureField = new PDSignatureField(acroForm);
+            PDAnnotationWidget widget = signatureField.getWidgets().get(0);
+            List<PDField> acroFormFields = acroForm.getFields();
+            acroForm.setSignaturesExist(true);
+            acroForm.setAppendOnly(true);
+            acroForm.getCOSObject().setDirect(true);
+            acroFormFields.add(signatureField);
+
+            widget.setRectangle(rect);
+
+            // from PDVisualSigBuilder.createHolderForm()
+            PDStream stream = new PDStream(doc);
+            PDFormXObject form = new PDFormXObject(stream);
+            PDResources res = new PDResources();
+            form.setResources(res);
+            form.setFormType(1);
+            PDRectangle bbox = new PDRectangle(rect.getWidth(), rect.getHeight());
+            float height = bbox.getHeight();
+            Matrix initialScale = null;
+            switch (srcDoc.getPage(pageNum).getRotation()) {
+                case 90:
+                    form.setMatrix(AffineTransform.getQuadrantRotateInstance(1));
+                    initialScale = Matrix.getScaleInstance(bbox.getWidth() / bbox.getHeight(), bbox.getHeight() / bbox.getWidth());
+                    height = bbox.getWidth();
+                    break;
+                case 180:
+                    form.setMatrix(AffineTransform.getQuadrantRotateInstance(2));
+                    break;
+                case 270:
+                    form.setMatrix(AffineTransform.getQuadrantRotateInstance(3));
+                    initialScale = Matrix.getScaleInstance(bbox.getWidth() / bbox.getHeight(), bbox.getHeight() / bbox.getWidth());
+                    height = bbox.getWidth();
+                    break;
+                case 0:
+                default:
+                    break;
+            }
+            form.setBBox(bbox);
+            PDFont font = PDType1Font.HELVETICA_BOLD;
+
+            // from PDVisualSigBuilder.createAppearanceDictionary()
+            PDAppearanceDictionary appearance = new PDAppearanceDictionary();
+            appearance.getCOSObject().setDirect(true);
+            PDAppearanceStream appearanceStream = new PDAppearanceStream(form.getCOSObject());
+            appearance.setNormalAppearance(appearanceStream);
+            widget.setAppearance(appearance);
+
+            try (PDPageContentStream cs = new PDPageContentStream(doc, appearanceStream)) {
+                // for 90Â° and 270Â° scale ratio of width / height
+                // not really sure about this
+                // why does scale have no effect when done in the form matrix???
+                if (initialScale != null) {
+                    cs.transform(initialScale);
+                }
+
+                // show background (just for debugging, to see the rect size + position)
+                cs.setNonStrokingColor(Color.LIGHT_GRAY);
+                cs.addRect(-5000, -5000, 10000, 10000);
+                cs.fill();
+
+                // show background image
+                // save and restore graphics if the image is too large and needs to be scaled
+                cs.saveGraphicsState();
+                //  cs.transform(Matrix.getScaleInstance(0.25f, 0.25f));
+                PDImageXObject img = PDImageXObject.createFromFileByExtension(imageFile, doc);
+
+                cs.drawImage(img, 0, 0, bbox.getWidth(), height);
+                cs.restoreGraphicsState();
+
+                // show text
+                float fontSize = 6;
+                float leading = fontSize * 1.5f;
+                cs.beginText();
+                cs.setFont(font, fontSize);
+                cs.setNonStrokingColor(Color.black);
+                cs.newLineAtOffset(fontSize, height - leading);
+                cs.setLeading(leading);
+
+                
+
+
+                String name = signature.getName();
+
+                // See https://stackoverflow.com/questions/12575990
+                // for better date formatting
+                SimpleDateFormat formatter = new SimpleDateFormat("dd-M-yyyy HH:mm:ss z");
+                String date = formatter.format(signature.getSignDate().getTime());
+                String reason = signature.getReason();
+
+                cs.showText("Signer: " + name);
+                cs.newLine();
+                cs.showText("Date: " + date);
+                cs.newLine();
+                cs.showText("Reason: " + reason);
+
+                cs.endText();
+            }
+
+            // no need to set annotations and /P entry
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            doc.save(baos);
+            return new ByteArrayInputStream(baos.toByteArray());
+        }
+    }
 }

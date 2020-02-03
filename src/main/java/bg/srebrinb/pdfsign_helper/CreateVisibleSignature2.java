@@ -34,7 +34,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.List;
 
@@ -184,7 +183,7 @@ public class CreateVisibleSignature2 extends CreateSignatureBase
             // sign a PDF with an existing empty signature, as created by the CreateEmptySignatureForm example.
             if (acroForm != null)
             {
-                signatureFieldName="Signature3";
+                signatureFieldName="person_signature";
                 signature = findExistingSignature(acroForm, signatureFieldName);
                 if (signature != null)
                 {
@@ -421,10 +420,10 @@ public class CreateVisibleSignature2 extends CreateSignatureBase
                 // show background image
                 // save and restore graphics if the image is too large and needs to be scaled
                 cs.saveGraphicsState();
-                cs.transform(Matrix.getScaleInstance(0.25f, 0.25f));
+              //  cs.transform(Matrix.getScaleInstance(0.25f, 0.25f));
                 PDImageXObject img = PDImageXObject.createFromFileByExtension(imageFile, doc);
                 
-                cs.drawImage(img, 0, 0,200,300);
+                cs.drawImage(img, 0, 0,bbox.getWidth(),height);
                 cs.restoreGraphicsState();
 
                 // show text
@@ -514,10 +513,10 @@ public class CreateVisibleSignature2 extends CreateSignatureBase
     {
         
         args=new String[4];
-        args[0]="1.pfx";
+        args[0]="test.pfx";
         args[1]="1234";
-        args[2]="1.pdf";
-        args[3]="C:\\work\\pdfbox\\examples\\src\\test\\resources\\org\\apache\\pdfbox\\examples\\signature\\stamp.jpg";
+        args[2]="generated.pdf";
+        args[3]="CertBG.png";
         // generate with
         // keytool -storepass 123456 -storetype PKCS12 -keystore file.p12 -genkey -alias client -keyalg RSA
         if (args.length < 4)
