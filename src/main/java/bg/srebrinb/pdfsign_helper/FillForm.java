@@ -27,7 +27,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
  */
 public class FillForm {
 
-    PDDocument document;
+    private PDDocument document;
     String defaultAppearanceString = null;
     PDAcroForm acroForm = null;
 
@@ -37,17 +37,17 @@ public class FillForm {
     }
 
     public void addFontDefaultResources(String fontFile, int sizeFont) throws FileNotFoundException, IOException {
-        PDFont font = PDType0Font.load(document, new FileInputStream(fontFile), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
+        PDFont font = PDType0Font.load(getDocument(), new FileInputStream(fontFile), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
         PDResources resources = new PDResources();
         resources.put(COSName.getPDFName("arialbd"), font);
-        acroForm = document.getDocumentCatalog().getAcroForm();
+        acroForm = getDocument().getDocumentCatalog().getAcroForm();
         acroForm.setDefaultResources(resources);
         defaultAppearanceString = String.format("/arialbd %d Tf 0 g", sizeFont);
     }
 
     public PDDocument populate(Map<String, String> data, boolean flatten) throws IOException {
         if (null == acroForm) {
-            acroForm = document.getDocumentCatalog().getAcroForm();
+            acroForm = getDocument().getDocumentCatalog().getAcroForm();
         }
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
@@ -91,6 +91,20 @@ public class FillForm {
             acroForm.flatten();
         }
 
+        return getDocument();
+    }
+
+    /**
+     * @return the document
+     */
+    public PDDocument getDocument() {
         return document;
+    }
+
+    /**
+     * @param document the document to set
+     */
+    public void setDocument(PDDocument document) {
+        this.document = document;
     }
 }

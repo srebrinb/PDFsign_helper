@@ -1,5 +1,5 @@
 { 
-   "signatureInx":1,
+   "signatureInx":0,
    "data":{       
       "person_firstName":"СРЕБРИН",
       "person_surname":"БОНЧЕВ",
@@ -15,6 +15,8 @@
       "person_phone":"+55509020303",
       "Cb_1_1":"true",
       "Cb_1_2":"false",
+      "Cb_1_3":"false",
+      "Cb_1_4":"false",
       "Cb_4_2":"true",
       "person_email":"test@example.com",
       "person_currAddress":"ГР.СОФИЯ Общ.СТОЛИЧНА Обл.СОФИЯ УЛ.ТОПЛИ ДОЛ 10",
