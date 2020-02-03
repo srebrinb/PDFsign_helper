@@ -106,6 +106,7 @@ setField(tmpPDD,"inc_num","2-123456");
 setField(tmpPDD,"inc_date","020-02-036");
 setField(tmpPDD,"еmployee_Name","Петър Тодоров");
 setField(tmpPDD,"еmployee_Pos","123456");
+        setField(tmpPDD,"toggle_16","123456");
         //  tmpPDD.getDocumentCatalog().getAcroForm().refreshAppearances();
         // tmpPDD.save("tmp2.pdf");
         OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
@@ -120,7 +121,33 @@ setField(tmpPDD,"еmployee_Pos","123456");
 
     }
 
-   
+    public static void setField(PDDocument pdfDocument, String name, String Value) throws IOException {
+        PDDocumentCatalog docCatalog = pdfDocument.getDocumentCatalog();
+        PDAcroForm acroForm = docCatalog.getAcroForm();
+        PDField field = acroForm.getField(name);
+
+        if (field instanceof PDCheckBox) {
+            ((PDCheckBox) field).check();
+        } else if (field instanceof PDTextField) {
+            System.out.println("Original value: " + field.getValueAsString());
+            field.setValue(Value);
+            System.out.println("New value: " + field.getValueAsString());
+        } else {
+            System.out.println("Nie znaleziono pola");
+        }
+
+        // vvv--- new 
+        COSDictionary fieldDictionary = field.getCOSObject();
+        COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
+        dictionary.setNeedToBeUpdated(true);
+        COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+        stream.setNeedToBeUpdated(true);
+        while (fieldDictionary != null) {
+            fieldDictionary.setNeedToBeUpdated(true);
+            fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+        }
+        // ^^^--- new 
+    }
 
     Long getSignIdx(String file) {
         JSONParser parser = new JSONParser();
