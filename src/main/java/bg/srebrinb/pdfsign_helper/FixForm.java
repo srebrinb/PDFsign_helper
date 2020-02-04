@@ -39,10 +39,12 @@ public class FixForm {
           //  System.out.println("name:" + fields.next().getPartialName());
             PDField field = fields.next();
             if (field instanceof PDTextField) {
+                
                 PDTextField textBox = (PDTextField) field;
 
                 // adjust to replace existing font name
                 textBox.setDefaultAppearance(defaultAppearanceString);
+                
             }
         }
         //acroForm.setNeedAppearances(true);

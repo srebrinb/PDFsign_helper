@@ -56,7 +56,7 @@ public class App {
         String fontFile = "fonts/ariblk.ttf";
         int sizeFont = 7;
 
-        //fillForm.addFontDefaultResources(fontFile, sizeFont);        
+        fillForm.addFontDefaultResources(fontFile, sizeFont);        
         PDDocument result = fillForm.populate(data, flatten);
         ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         result.save(tmp);
@@ -85,16 +85,22 @@ public class App {
         dataFile = "data2.json";
         data = app.getData(dataFile);
         signatureInx = app.getSignIdx(dataFile);
-        /*
-        fillForm.setDocument(PDDocument.load(new File("sign_1.pdf")));
-        result = fillForm.populate(data, flatten);
+        
+       // fillForm.setDocument(PDDocument.load(new File("sign_1.pdf")));
+       FillForm fillFormNew = new FillForm(PDDocument.load(new File("sign_1.pdf")));
+       fillFormNew.addFontDefaultResources(fontFile, sizeFont);  
+       fillFormNew.isFix=true;
+        result = fillFormNew.populate(data, flatten);
         tmp=new ByteArrayOutputStream();
-        result.save(tmp);
+        output = new FileOutputStream("tmp1.pdf");
+        result.saveIncremental(output);
+        result.saveIncremental(tmp);
         result.save("tmp2.pdf");
-        tmpPDD=PDDocument.load(tmp.toByteArray());
-         */
+        tmpPDD=fillFormNew.getDocument();
+      //  tmpPDD=PDDocument.load(tmp.toByteArray());
+        
 
-        tmpPDD = PDDocument.load(new File("sign_1.pdf"));
+        //tmpPDD = PDDocument.load(new File("sign_1.pdf"));
 /*
         tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_num").setValue("2-123456");
         tmpPDD.getDocumentCatalog().getAcroForm().getField("inc_date").setValue("2020-02-03");
@@ -102,18 +108,21 @@ public class App {
         tmpPDD.getDocumentCatalog().getAcroForm().getField("еmployee_Pos").setValue("123456");
         tmpPDD.getDocumentCatalog().getAcroForm().setNeedAppearances(true);
 */
+
 setField(tmpPDD,"inc_num","2-123456");
-setField(tmpPDD,"inc_date","020-02-036");
-setField(tmpPDD,"еmployee_Name","Петър Тодоров");
-setField(tmpPDD,"еmployee_Pos","123456");
-        setField(tmpPDD,"toggle_16","123456");
+//setField(tmpPDD,"inc_date","020-02-036");
+//setField(tmpPDD,"еmployee_Name","Петър Тодоров");
+//setField(tmpPDD,"еmployee_Pos","123456");
+
+      //  setField(tmpPDD,"toggle_16","123456");
         //  tmpPDD.getDocumentCatalog().getAcroForm().refreshAppearances();
         // tmpPDD.save("tmp2.pdf");
-        OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
+       /* OutputStream outputTmp = new FileOutputStream("tmp2.pdf");
         tmpPDD.saveIncremental(outputTmp);
         // tmpPDD.close();
         outputTmp.close();
-        //    tmpPDD=PDDocument.load(new File("tmp2.pdf"));
+*/
+        //tmpPDD=PDDocument.load(new File("tmp2.pdf"));
         signAndLockExistingField.setDocument(tmpPDD);
         output = new FileOutputStream("sign_2.pdf");
         signAndLockExistingField.signAndLock(signatureInx.intValue(), reason, output);
@@ -128,10 +137,8 @@ setField(tmpPDD,"еmployee_Pos","123456");
 
         if (field instanceof PDCheckBox) {
             ((PDCheckBox) field).check();
-        } else if (field instanceof PDTextField) {
-            System.out.println("Original value: " + field.getValueAsString());
-            field.setValue(Value);
-            System.out.println("New value: " + field.getValueAsString());
+        } else if (field instanceof PDTextField) {            
+            field.setValue(Value);            
         } else {
             System.out.println("Nie znaleziono pola");
         }
@@ -146,6 +153,7 @@ setField(tmpPDD,"еmployee_Pos","123456");
             fieldDictionary.setNeedToBeUpdated(true);
             fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
         }
+
         // ^^^--- new 
     }
 

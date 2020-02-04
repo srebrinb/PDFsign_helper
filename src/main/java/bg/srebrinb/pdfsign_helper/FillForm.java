@@ -33,7 +33,7 @@ public class FillForm {
     private PDDocument document;
     String defaultAppearanceString = null;
     PDAcroForm acroForm = null;
-
+    public boolean isFix=false;
     public FillForm(PDDocument document) {
         this.document = document;
 
@@ -56,8 +56,9 @@ public class FillForm {
         while (fields.hasNext()) {
             System.out.println("name:" + fields.next().getPartialName());
         }
-      //  acroForm.setDefaultAppearance(defaultAppearanceString);
-
+        if (defaultAppearanceString != null) {
+            acroForm.setDefaultAppearance(defaultAppearanceString);
+        }
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
             System.out.println("key " + key + "= " + item.getValue());
@@ -67,19 +68,18 @@ public class FillForm {
                     System.out.println("(type: " + field.getClass().getSimpleName() + ")");
                     PDTextField textBox = (PDTextField) field;
 
-                    /*
                     if (null != defaultAppearanceString) {
                         textBox.setDefaultAppearance(defaultAppearanceString);
                     }
-                    */
-                    
-                    textBox.setValue(item.getValue());
-                 //   textBox.setReadOnly(true);
 
+//                    textBox.setValue(item.getValue());
+                    //   textBox.setReadOnly(true);
+                    setField(key, item.getValue());
                     //  System.out.println("value is set to: '" + item.getValue() + "'");
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {
-                        ((PDCheckBox) field).check();                        
+                        //  ((PDCheckBox) field).check();   
+                        setField(key, item.getValue());
                     }
                     //field.setReadOnly(true);
                 } else {
@@ -112,15 +112,16 @@ public class FillForm {
     public void setDocument(PDDocument document) {
         this.document = document;
     }
-     public static void setField(PDDocument pdfDocument, String name, String Value) throws IOException {
-        PDDocumentCatalog docCatalog = pdfDocument.getDocumentCatalog();
-        PDAcroForm acroForm = docCatalog.getAcroForm();
+
+    public void setField(String name, String Value) throws IOException {
+        // PDDocumentCatalog docCatalog = this.document.getDocumentCatalog();
+        // PDAcroForm acroForm = docCatalog.getAcroForm();
         PDField field = acroForm.getField(name);
 
         if (field instanceof PDCheckBox) {
-            field.setValue("Yes");
+            ((PDCheckBox) field).check();
         } else if (field instanceof PDTextField) {
-            System.out.println("Original value: " + field.getValueAsString());
+            System.out.println(name + ":" + field.getValueAsString());
             field.setValue(Value);
             System.out.println("New value: " + field.getValueAsString());
         } else {
@@ -131,12 +132,15 @@ public class FillForm {
         COSDictionary fieldDictionary = field.getCOSObject();
         COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
         dictionary.setNeedToBeUpdated(true);
-        COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
-        stream.setNeedToBeUpdated(true);
-        while (fieldDictionary != null) {
-            fieldDictionary.setNeedToBeUpdated(true);
-            fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+        if (field instanceof PDTextField) {
+            COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+            stream.setNeedToBeUpdated(true);
+            while (fieldDictionary != null) {
+                fieldDictionary.setNeedToBeUpdated(true);
+                fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+            }
         }
+
         // ^^^--- new 
     }
 }
