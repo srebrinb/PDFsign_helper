@@ -56,7 +56,7 @@ public class App {
         String fontFile = "fonts/ariblk.ttf";
         int sizeFont = 7;
 
-        fillForm.addFontDefaultResources(fontFile, sizeFont);        
+     //   fillForm.addFontDefaultResources(fontFile, sizeFont);        
         PDDocument result = fillForm.populate(data, flatten);
         ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         result.save(tmp);

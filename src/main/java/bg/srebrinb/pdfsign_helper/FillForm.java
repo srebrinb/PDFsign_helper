@@ -65,7 +65,7 @@ public class FillForm {
             PDField field = acroForm.getField(key);
             if (field != null) {
                 if (field instanceof PDTextField) {
-                    System.out.println("(type: " + field.getClass().getSimpleName() + ")");
+                    System.out.println("(name: " + field.getPartialName() + ")");
                     PDTextField textBox = (PDTextField) field;
 
                     if (null != defaultAppearanceString) {
@@ -127,7 +127,7 @@ public class FillForm {
         } else {
             System.out.println("Nie znaleziono pola");
         }
-
+        try{
         // vvv--- new 
         COSDictionary fieldDictionary = field.getCOSObject();
         COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
@@ -140,7 +140,10 @@ public class FillForm {
                 fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
             }
         }
-
+        }catch(Exception ex){
+            System.out.println(">>>>name:"+name);
+            ex.printStackTrace();
+        }
         // ^^^--- new 
     }
 }

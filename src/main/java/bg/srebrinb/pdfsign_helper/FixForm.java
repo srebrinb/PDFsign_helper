@@ -25,7 +25,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 public class FixForm {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("form.pdf");
+        File file = new File("fixForm_МО_3.pdf");
         PDDocument document = PDDocument.load(file);
         PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ariblk.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
         PDResources resources = new PDResources();
