@@ -5,9 +5,7 @@
  */
 package bg.srebrinb.pdfsign_helper;
 
-import static bg.srebrinb.pdfsign_helper.SrTest.COS_NAME_LOCK;
-import static bg.srebrinb.pdfsign_helper.SrTest.chain;
-import static bg.srebrinb.pdfsign_helper.SrTest.pk;
+
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
@@ -116,11 +114,10 @@ public class SignAndLockExistingField {
     public void signAndLock(int signatureInx,String reason,OutputStream output) throws IOException {
      //   ByteArrayOutputStream output=new ByteArrayOutputStream();
         SignatureInterface signatureInterface= data -> this.signWithSeparatedHashing(data);
-        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);
+        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);        
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
-        PDRectangle rect = null;
-        rect = signatureField.getWidgets().get(0).getRectangle();
+        PDRectangle rect = signatureField.getWidgets().get(0).getRectangle();
 
         COSBase lock = signatureField.getCOSObject().getDictionaryObject(COS_NAME_LOCK);
         if (lock instanceof COSDictionary) {
@@ -187,6 +184,7 @@ public class SignAndLockExistingField {
         boolean isUpdated = false;
         if (fields != null) {
             for (PDField field : fields) {
+                if (field==null) break;
                 boolean isUpdatedField = false;
                 if (shallBeLocked.test(field)) {
                     field.setFieldFlags(field.getFieldFlags() | 1);
@@ -279,6 +277,7 @@ public class SignAndLockExistingField {
             form.setResources(res);
             form.setFormType(1);
             PDRectangle bbox = new PDRectangle(rect.getWidth(), rect.getHeight());
+            
             float height = bbox.getHeight();
             Matrix initialScale = null;
             switch (srcDoc.getPage(pageNum).getRotation()) {
@@ -403,6 +402,6 @@ public class SignAndLockExistingField {
      */
     public void setDocument(PDDocument document) {
         this.document = document;
-    }
+    }    
 
 }
