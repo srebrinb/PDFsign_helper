@@ -11,6 +11,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
@@ -47,7 +49,10 @@ public class FillForm {
         acroForm.setDefaultResources(resources);
         defaultAppearanceString = String.format("/arialbd %d Tf 0 g", sizeFont);
     }
-
+    public static PDDocument fastPopulate(PDDocument document,Map<String, String> data) throws IOException{
+        FillForm form=new FillForm(document);
+        return form.populate(data, false);
+    }
     public PDDocument populate(Map<String, String> data, boolean flatten) throws IOException {
         if (null == acroForm) {
             acroForm = getDocument().getDocumentCatalog().getAcroForm();
@@ -60,28 +65,19 @@ public class FillForm {
             acroForm.setDefaultAppearance(defaultAppearanceString);
         }
         for (Map.Entry<String, String> item : data.entrySet()) {
-            String key = item.getKey();
-            System.out.println("key " + key + "= " + item.getValue());
+            String key = item.getKey();            
             PDField field = acroForm.getField(key);
             if (field != null) {
-                if (field instanceof PDTextField) {
-                    System.out.println("(name: " + field.getPartialName() + ")");
+                if (field instanceof PDTextField) {                    
                     PDTextField textBox = (PDTextField) field;
-
                     if (null != defaultAppearanceString) {
                         textBox.setDefaultAppearance(defaultAppearanceString);
                     }
-
-//                    textBox.setValue(item.getValue());
-                    //   textBox.setReadOnly(true);
-                    setField(key, item.getValue());
-                    //  System.out.println("value is set to: '" + item.getValue() + "'");
+                    setField(key, item.getValue());                    
                 } else if (field instanceof PDCheckBox) {
-                    if (item.getValue().endsWith("true")) {
-                        //  ((PDCheckBox) field).check();   
+                    if (item.getValue().endsWith("true")) {                     
                         setField(key, item.getValue());
-                    }
-                    //field.setReadOnly(true);
+                    }                    
                 } else {
                     System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
                             + field.getFieldType());
@@ -117,18 +113,13 @@ public class FillForm {
         // PDDocumentCatalog docCatalog = this.document.getDocumentCatalog();
         // PDAcroForm acroForm = docCatalog.getAcroForm();
         PDField field = acroForm.getField(name);
-
+        if (field==null) return;
         if (field instanceof PDCheckBox) {
             ((PDCheckBox) field).check();
-        } else if (field instanceof PDTextField) {
-            System.out.println(name + ":" + field.getValueAsString());
-            field.setValue(Value);
-            System.out.println("New value: " + field.getValueAsString());
-        } else {
-            System.out.println("Nie znaleziono pola");
-        }
-        try{
-        // vvv--- new 
+        } else if (field instanceof PDTextField) {            
+            field.setValue(Value);            
+        } 
+        try{        
         COSDictionary fieldDictionary = field.getCOSObject();
         COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
         dictionary.setNeedToBeUpdated(true);
@@ -141,9 +132,7 @@ public class FillForm {
             }
         }
         }catch(Exception ex){
-            System.out.println(">>>>name:"+name);
-            ex.printStackTrace();
-        }
-        // ^^^--- new 
+            Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, null, ex);
+        }        
     }
 }

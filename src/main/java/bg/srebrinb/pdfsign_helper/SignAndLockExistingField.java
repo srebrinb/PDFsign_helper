@@ -25,6 +25,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertSelector;
+import java.security.cert.CertStore;
+import java.security.cert.CertStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -32,7 +35,9 @@ import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -79,10 +84,17 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.CMSAbsentContent;
+import org.bouncycastle.cms.CMSException;
+import org.bouncycastle.cms.CMSProcessable;
+import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator;
 import org.bouncycastle.cms.SignerInfoGeneratorBuilder;
+import org.bouncycastle.cms.SignerInformation;
+import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.cms.SignerInformationVerifier;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
@@ -116,11 +128,10 @@ public class SignAndLockExistingField {
     public void signAndLock(int signatureInx,String reason,OutputStream output) throws IOException {
      //   ByteArrayOutputStream output=new ByteArrayOutputStream();
         SignatureInterface signatureInterface= data -> this.signWithSeparatedHashing(data);
-        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);
+        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);        
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
-        PDRectangle rect = null;
-        rect = signatureField.getWidgets().get(0).getRectangle();
+        PDRectangle rect = signatureField.getWidgets().get(0).getRectangle();
 
         COSBase lock = signatureField.getCOSObject().getDictionaryObject(COS_NAME_LOCK);
         if (lock instanceof COSDictionary) {
@@ -187,6 +198,7 @@ public class SignAndLockExistingField {
         boolean isUpdated = false;
         if (fields != null) {
             for (PDField field : fields) {
+                if (field==null) break;
                 boolean isUpdatedField = false;
                 if (shallBeLocked.test(field)) {
                     field.setFieldFlags(field.getFieldFlags() | 1);
@@ -279,6 +291,7 @@ public class SignAndLockExistingField {
             form.setResources(res);
             form.setFormType(1);
             PDRectangle bbox = new PDRectangle(rect.getWidth(), rect.getHeight());
+            
             float height = bbox.getHeight();
             Matrix initialScale = null;
             switch (srcDoc.getPage(pageNum).getRotation()) {
@@ -403,6 +416,6 @@ public class SignAndLockExistingField {
      */
     public void setDocument(PDDocument document) {
         this.document = document;
-    }
+    }    
 
 }
