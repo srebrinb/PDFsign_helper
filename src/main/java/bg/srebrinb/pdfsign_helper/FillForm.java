@@ -5,7 +5,6 @@
  */
 package bg.srebrinb.pdfsign_helper;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,7 +16,6 @@ import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
@@ -35,6 +33,7 @@ public class FillForm {
     private PDDocument document;
     String defaultAppearanceString = null;
     PDAcroForm acroForm = null;
+
     public FillForm(PDDocument document) {
         this.document = document;
 
@@ -48,47 +47,48 @@ public class FillForm {
         acroForm.setDefaultResources(resources);
         defaultAppearanceString = String.format("/arialbd %d Tf 0 g", sizeFont);
     }
-    public static PDDocument fastPopulate(PDDocument document,Map<String, String> data) throws IOException{
-        FillForm form=new FillForm(document);
+
+    public static PDDocument fastPopulate(PDDocument document, Map<String, String> data) throws IOException {
+        FillForm form = new FillForm(document);
         return form.populate(data, false);
     }
+
     public PDDocument populate(Map<String, String> data, boolean flatten) throws IOException {
         if (null == acroForm) {
             acroForm = getDocument().getDocumentCatalog().getAcroForm();
         }
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
-            System.out.println("name:" + fields.next().getPartialName());
+            Logger.getLogger(FillForm.class.getName()).log(Level.FINER, "name:{0}", fields.next().getPartialName());
         }
         if (defaultAppearanceString != null) {
             acroForm.setDefaultAppearance(defaultAppearanceString);
         }
         for (Map.Entry<String, String> item : data.entrySet()) {
-            String key = item.getKey();            
+            String key = item.getKey();
             PDField field = acroForm.getField(key);
-            if (field != null) {
-                if (field instanceof PDTextField) {                    
-                    PDTextField textBox = (PDTextField) field;
-                    if (null != defaultAppearanceString) {
-                        textBox.setDefaultAppearance(defaultAppearanceString);
-                    }
-                    try{
-                    setField(key, item.getValue());                    
-                    }catch(IllegalArgumentException iae){
-                        System.out.println("field:"+key);
-                        iae.printStackTrace();
-                    }
-                } else if (field instanceof PDCheckBox) {
-                    if (item.getValue().endsWith("true")) {                     
-                        setField(key, item.getValue());
-                    }                    
-                } else {
-                    System.err.println("Unexpected form field type found with placeholder name: '" + key + "'"
-                            + field.getFieldType());
+            if (field == null) {
+                Logger.getLogger(FillForm.class.getName()).log(Level.INFO, "No field found with name:{0}", key);
+                break;
+            }
+            if (field instanceof PDTextField) {
+                PDTextField textBox = (PDTextField) field;
+                if (null != defaultAppearanceString) {
+                    textBox.setDefaultAppearance(defaultAppearanceString);
+                }
+                try {
+                    setField(key, item.getValue());
+                } catch (IllegalArgumentException iae) {
+                    Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, "field:" + key, iae);
+                }
+            } else if (field instanceof PDCheckBox) {
+                if (item.getValue().endsWith("true")) {
+                    setField(key, item.getValue());
                 }
             } else {
-                System.err.println("No field found with name:" + key);
+                Logger.getLogger(FillForm.class.getName()).log(Level.INFO, "Unexpected form field type found with placeholder name: ''{0}''{1}", new Object[]{key, field.getFieldType()});
             }
+
         }
 
         // you can optionally flatten the document to merge acroform lay to main one
@@ -114,29 +114,30 @@ public class FillForm {
     }
 
     public void setField(String name, String Value) throws IOException {
-        // PDDocumentCatalog docCatalog = this.document.getDocumentCatalog();
-        // PDAcroForm acroForm = docCatalog.getAcroForm();
+
         PDField field = acroForm.getField(name);
-        if (field==null) return;
+        if (field == null) {
+            return;
+        }
         if (field instanceof PDCheckBox) {
             ((PDCheckBox) field).check();
-        } else if (field instanceof PDTextField) {            
-            field.setValue(Value);            
-        } 
-        try{        
-        COSDictionary fieldDictionary = field.getCOSObject();
-        COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
-        dictionary.setNeedToBeUpdated(true);
-        if (field instanceof PDTextField) {
-            COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
-            stream.setNeedToBeUpdated(true);
-            while (fieldDictionary != null) {
-                fieldDictionary.setNeedToBeUpdated(true);
-                fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
-            }
+        } else if (field instanceof PDTextField) {
+            field.setValue(Value);
         }
-        }catch(Exception ex){
+        try {
+            COSDictionary fieldDictionary = field.getCOSObject();
+            COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
+            dictionary.setNeedToBeUpdated(true);
+            if (field instanceof PDTextField) {
+                COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+                stream.setNeedToBeUpdated(true);
+                while (fieldDictionary != null) {
+                    fieldDictionary.setNeedToBeUpdated(true);
+                    fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+                }
+            }
+        } catch (Exception ex) {
             Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, null, ex);
-        }        
+        }
     }
 }

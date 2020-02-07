@@ -18,22 +18,12 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -126,11 +116,8 @@ public class App {
             JSONObject jsonObject = (JSONObject) obj;
             JSONObject formDataObj = (JSONObject) jsonObject.get("data");
 
-            formDataObj.keySet().forEach(new Consumer() {
-                @Override
-                public void accept(Object keySet) {
-                    data.put((String) keySet, (String) formDataObj.get(keySet));
-                }
+            formDataObj.keySet().forEach((Object keySet) -> {
+                data.put((String) keySet, (String) formDataObj.get(keySet));
             });
 
         } catch (Exception e) {

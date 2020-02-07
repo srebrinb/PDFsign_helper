@@ -5,7 +5,6 @@
  */
 package bg.srebrinb.pdfsign_helper;
 
-
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
@@ -81,10 +80,6 @@ import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator;
 import org.bouncycastle.cms.SignerInfoGeneratorBuilder;
-import org.bouncycastle.cms.SignerInformation;
-import org.bouncycastle.cms.SignerInformationStore;
-import org.bouncycastle.cms.SignerInformationVerifier;
-import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
@@ -103,9 +98,9 @@ public class SignAndLockExistingField {
     PDAcroForm acroForm = null;
     private File imageFile = new File("CertBG.png");
     ;
-    public static KeyStore ks = null;
-    public static PrivateKey pk = null;
-    public static Certificate[] chain = null;
+    public KeyStore ks = null;
+    public PrivateKey pk = null;
+    public Certificate[] chain = null;
     public static final COSName COS_NAME_LOCK = COSName.getPDFName("Lock");
     public static final COSName COS_NAME_ACTION = COSName.getPDFName("Action");
     public static final COSName COS_NAME_ALL = COSName.getPDFName("All");
@@ -115,14 +110,13 @@ public class SignAndLockExistingField {
         this.document = document;
     }
 
-    public void signAndLock(int signatureInx,String reason,OutputStream output) throws IOException {
-     //   ByteArrayOutputStream output=new ByteArrayOutputStream();
-        SignatureInterface signatureInterface= data -> this.signWithSeparatedHashing(data);
-        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);        
-        int pageNum=signatureField.getWidgets().get(0).getPage().getStructParents();
+    public void signAndLock(int signatureInx, String reason, OutputStream output) throws IOException {
+        SignatureInterface signatureInterface = data -> this.signWithSeparatedHashing(data);
+        PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);
+        int pageNum = signatureField.getWidgets().get(0).getPage().getStructParents();
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
-        
+
         PDRectangle rect = signatureField.getWidgets().get(0).getRectangle();
 
         COSBase lock = signatureField.getCOSObject().getDictionaryObject(COS_NAME_LOCK);
@@ -145,7 +139,7 @@ public class SignAndLockExistingField {
             final Predicate<PDField> shallBeLocked;
             final COSArray fields = lockDict.getCOSArray(COSName.FIELDS);
             final List<String> fieldNames = fields == null ? Collections.emptyList()
-                    : fields.toList().stream().filter(c -> (c instanceof COSString)).map(s -> ((COSString) s).getString()).collect(Collectors.toList());
+                            : fields.toList().stream().filter(c -> (c instanceof COSString)).map(s -> ((COSString) s).getString()).collect(Collectors.toList());
             final COSName action = lockDict.getCOSName(COSName.getPDFName("Action"));
             if (action.equals(COSName.getPDFName("Include"))) {
                 shallBeLocked = f -> fieldNames.contains(f.getFullyQualifiedName());
@@ -170,49 +164,55 @@ public class SignAndLockExistingField {
         //signature.setLocation("blablabla");
         signature.setReason(reason);
         signature.setSignDate(Calendar.getInstance());
+        SignatureOptions signatureOptions = new SignatureOptions();;
+        try {
+            // register signature dictionary and sign interface
 
-        // register signature dictionary and sign interface
-        SignatureOptions signatureOptions = new SignatureOptions();
-        signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(), pageNum, rect, signature));
-        
-        signatureOptions.setPage(pageNum);
+            signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(), pageNum, rect, signature));
 
-        getDocument().addSignature(signature, signatureInterface, signatureOptions);
-        ExternalSigningSupport externalSigning
-                = getDocument().saveIncrementalForExternalSigning(output);
-        // invoke external signature service
-        byte[] cmsSignature = signatureInterface.sign(externalSigning.getContent());
-        // set signature bytes received from the service
-        externalSigning.setSignature(cmsSignature);
-        //return output;
+            signatureOptions.setPage(pageNum);
+
+            getDocument().addSignature(signature, signatureInterface, signatureOptions);
+            ExternalSigningSupport externalSigning
+                            = getDocument().saveIncrementalForExternalSigning(output);
+            // invoke external signature service
+            byte[] cmsSignature = signatureInterface.sign(externalSigning.getContent());
+            // set signature bytes received from the service
+            externalSigning.setSignature(cmsSignature);
+            //return output;
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            signatureOptions.close();
+        }
     }
 
     boolean lockFields(List<PDField> fields, Predicate<PDField> shallBeLocked) {
         boolean isUpdated = false;
-        if (fields != null) {
-            for (PDField field : fields) {
-                if (field==null) break;
-                boolean isUpdatedField = false;
-                if (shallBeLocked.test(field)) {
-                    field.setFieldFlags(field.getFieldFlags() | 1);
-                    if (field instanceof PDTerminalField) {
-                        for (PDAnnotationWidget widget : ((PDTerminalField) field).getWidgets()) {
-                            widget.setLocked(true);
-                        }
-                    }
+
+        for (PDField field : fields) {
+           
+            boolean isUpdatedField = false;
+            if (field != null && shallBeLocked.test(field)) {
+                field.setFieldFlags(field.getFieldFlags() | 1);
+                if (field instanceof PDTerminalField) {
+                    ((PDTerminalField) field).getWidgets().forEach((widget) -> {
+                        widget.setLocked(true);
+                    });
+                }
+                isUpdatedField = true;
+            }
+            if (field instanceof PDNonTerminalField) {
+                if (lockFields(((PDNonTerminalField) field).getChildren(), shallBeLocked)) {
                     isUpdatedField = true;
                 }
-                if (field instanceof PDNonTerminalField) {
-                    if (lockFields(((PDNonTerminalField) field).getChildren(), shallBeLocked)) {
-                        isUpdatedField = true;
-                    }
-                }
-                if (isUpdatedField) {
-                    field.getCOSObject().setNeedToBeUpdated(true);
-                    isUpdated = true;
-                }
+            }
+            if (isUpdatedField) {
+                field.getCOSObject().setNeedToBeUpdated(true);
+                isUpdated = true;
             }
         }
+
         return isUpdated;
     }
 
@@ -229,14 +229,14 @@ public class SignAndLockExistingField {
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
 
             Attribute attr = new Attribute(CMSAttributes.messageDigest,
-                    new DERSet(new DEROctetString(digest)));
+                            new DERSet(new DEROctetString(digest)));
 
             ASN1EncodableVector v = new ASN1EncodableVector();
 
             v.add(attr);
 
             SignerInfoGeneratorBuilder builder = new SignerInfoGeneratorBuilder(new BcDigestCalculatorProvider())
-                    .setSignedAttributeGenerator(new DefaultSignedAttributeTableGenerator(new AttributeTable(v)));
+                            .setSignedAttributeGenerator(new DefaultSignedAttributeTableGenerator(new AttributeTable(v)));
 
             AlgorithmIdentifier sha256withRSA = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256withRSA");
 
@@ -245,10 +245,10 @@ public class SignAndLockExistingField {
             X509Certificate cert = (X509Certificate) certFactory.generateCertificate(in);
 
             gen.addSignerInfoGenerator(builder.build(
-                    new BcRSAContentSignerBuilder(sha256withRSA,
-                            new DefaultDigestAlgorithmIdentifierFinder().find(sha256withRSA))
-                            .build(PrivateKeyFactory.createKey(pk.getEncoded())),
-                    new JcaX509CertificateHolder(cert)));
+                            new BcRSAContentSignerBuilder(sha256withRSA,
+                                            new DefaultDigestAlgorithmIdentifierFinder().find(sha256withRSA))
+                                            .build(PrivateKeyFactory.createKey(pk.getEncoded())),
+                            new JcaX509CertificateHolder(cert)));
 
             gen.addCertificates(certs);
 
@@ -260,18 +260,18 @@ public class SignAndLockExistingField {
     }
 
     private InputStream createVisualSignatureTemplate(PDDocument srcDoc, int pageNum,
-            PDRectangle rect, PDSignature signature) throws IOException {
+                    PDRectangle rect, PDSignature signature) throws IOException {
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(srcDoc.getPage(pageNum).getMediaBox());
             doc.addPage(page);
-            PDAcroForm acroForm = new PDAcroForm(doc);
-            doc.getDocumentCatalog().setAcroForm(acroForm);
-            PDSignatureField signatureField = new PDSignatureField(acroForm);
+            PDAcroForm in_acroForm = new PDAcroForm(doc);
+            doc.getDocumentCatalog().setAcroForm(in_acroForm);
+            PDSignatureField signatureField = new PDSignatureField(in_acroForm);
             PDAnnotationWidget widget = signatureField.getWidgets().get(0);
-            List<PDField> acroFormFields = acroForm.getFields();
-            acroForm.setSignaturesExist(true);
-            acroForm.setAppendOnly(true);
-            acroForm.getCOSObject().setDirect(true);
+            List<PDField> acroFormFields = in_acroForm.getFields();
+            in_acroForm.setSignaturesExist(true);
+            in_acroForm.setAppendOnly(true);
+            in_acroForm.getCOSObject().setDirect(true);
             acroFormFields.add(signatureField);
 
             widget.setRectangle(rect);
@@ -283,7 +283,7 @@ public class SignAndLockExistingField {
             form.setResources(res);
             form.setFormType(1);
             PDRectangle bbox = new PDRectangle(rect.getWidth(), rect.getHeight());
-            
+
             float height = bbox.getHeight();
             Matrix initialScale = null;
             switch (srcDoc.getPage(pageNum).getRotation()) {
@@ -307,7 +307,6 @@ public class SignAndLockExistingField {
             form.setBBox(bbox);
             PDFont font = PDType1Font.HELVETICA_BOLD;
 
-            // from PDVisualSigBuilder.createAppearanceDictionary()
             PDAppearanceDictionary appearance = new PDAppearanceDictionary();
             appearance.getCOSObject().setDirect(true);
             PDAppearanceStream appearanceStream = new PDAppearanceStream(form.getCOSObject());
@@ -330,7 +329,7 @@ public class SignAndLockExistingField {
                 // show background image
                 // save and restore graphics if the image is too large and needs to be scaled
                 cs.saveGraphicsState();
-                //  cs.transform(Matrix.getScaleInstance(0.25f, 0.25f));
+
                 PDImageXObject img = PDImageXObject.createFromFileByExtension(imageFile, doc);
 
                 cs.drawImage(img, 0, 0, bbox.getWidth(), height);
@@ -370,10 +369,9 @@ public class SignAndLockExistingField {
     }
 
     public void setKeyStore(String ksFilePath, char[] ksPassword)
-            throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
+                    throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
         BouncyCastleProvider bcp = new BouncyCastleProvider();
         Security.addProvider(bcp);
-        //Security.insertProviderAt(bcp, 1);
 
         ks = KeyStore.getInstance("PKCS12");
         ks.load(new FileInputStream(ksFilePath), ksPassword);
@@ -408,6 +406,6 @@ public class SignAndLockExistingField {
      */
     public void setDocument(PDDocument document) {
         this.document = document;
-    }    
+    }
 
 }
