@@ -48,7 +48,7 @@ public class App {
     public static void main(String[] args) throws IOException {
         String dataFile = "data.json";
         App app = new App();
-        File file = new File("fixForm.pdf");
+        File file = new File("fix_dogovorUPF.pdf");
         app.document = PDDocument.load(file);
         Map<String, String> data = app.getData(dataFile);
 

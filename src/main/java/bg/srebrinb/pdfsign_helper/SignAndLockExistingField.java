@@ -119,8 +119,10 @@ public class SignAndLockExistingField {
      //   ByteArrayOutputStream output=new ByteArrayOutputStream();
         SignatureInterface signatureInterface= data -> this.signWithSeparatedHashing(data);
         PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);        
+        int pageNum=signatureField.getWidgets().get(0).getPage().getStructParents();
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
+        
         PDRectangle rect = signatureField.getWidgets().get(0).getRectangle();
 
         COSBase lock = signatureField.getCOSObject().getDictionaryObject(COS_NAME_LOCK);
@@ -171,8 +173,9 @@ public class SignAndLockExistingField {
 
         // register signature dictionary and sign interface
         SignatureOptions signatureOptions = new SignatureOptions();
-        signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(), 0, rect, signature));
-        signatureOptions.setPage(0);
+        signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(), pageNum, rect, signature));
+        
+        signatureOptions.setPage(pageNum);
 
         getDocument().addSignature(signature, signatureInterface, signatureOptions);
         ExternalSigningSupport externalSigning

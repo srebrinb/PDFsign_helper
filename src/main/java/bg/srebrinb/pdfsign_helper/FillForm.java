@@ -35,7 +35,6 @@ public class FillForm {
     private PDDocument document;
     String defaultAppearanceString = null;
     PDAcroForm acroForm = null;
-    public boolean isFix=false;
     public FillForm(PDDocument document) {
         this.document = document;
 
@@ -73,7 +72,12 @@ public class FillForm {
                     if (null != defaultAppearanceString) {
                         textBox.setDefaultAppearance(defaultAppearanceString);
                     }
+                    try{
                     setField(key, item.getValue());                    
+                    }catch(IllegalArgumentException iae){
+                        System.out.println("field:"+key);
+                        iae.printStackTrace();
+                    }
                 } else if (field instanceof PDCheckBox) {
                     if (item.getValue().endsWith("true")) {                     
                         setField(key, item.getValue());
