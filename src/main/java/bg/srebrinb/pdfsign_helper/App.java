@@ -20,7 +20,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -36,9 +35,11 @@ public class App {
     private PDDocument document;
 
     public static void main(String[] args) throws IOException {
+        
+        
         String dataFile = "data.json";
         App app = new App();
-        File file = new File("fix_dogovorUPF.pdf");
+        File file = new File("fix_zaiavleniePPF_ZP.pdf");
         app.document = PDDocument.load(file);
         Map<String, String> data = app.getData(dataFile);
 
@@ -117,6 +118,7 @@ public class App {
             JSONObject formDataObj = (JSONObject) jsonObject.get("data");
 
             formDataObj.keySet().forEach((Object keySet) -> {
+                System.out.println(keySet+"="+formDataObj.get(keySet));
                 data.put((String) keySet, (String) formDataObj.get(keySet));
             });
 
