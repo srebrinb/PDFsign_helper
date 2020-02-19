@@ -1,7 +1,8 @@
 { 
    "signatureInx":0,
    "data":{       
-      "person_firstName":"СРЕБРИН",
+      "person_names":"СРЕБРИН БОНЧЕВ ИВАНОВ",
+      "person_firstName":"СРЕБРИН+",
       "person_surname":"БОНЧЕВ",
       "person_familyName":"ИВАНОВ",
       "person_EGN":"74090123456",
@@ -9,15 +10,15 @@
       "person_issuerDate":"2014.01.11",
       "person_issuerName":"СДВР",
       "person_permAddress":"ГР.СОФИЯ Общ.СТОЛИЧНА Обл.СОФИЯ УЛ.ТОПЛИ ДОЛ 10",
-
+			"person_phone":"08889565656",
       "Cb_1_1":"true",
       "Cb_1_2":"false",
       "Cb_1_3":"false",
       "Cb_1_4":"false",
+      "Cb_4_1":"false",
       "Cb_4_2":"true",
       "person_email":"test@example.com",
       "person_currAddress":"ГР.СОФИЯ Общ.СТОЛИЧНА Обл.СОФИЯ УЛ.ТОПЛИ ДОЛ 10",
-      "old_POK":"ПОК 'Доверие' АД",
-      "old_fund":"УПД 'Доверие'",
+
    }
 }

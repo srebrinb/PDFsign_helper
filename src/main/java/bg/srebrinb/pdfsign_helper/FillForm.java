@@ -35,8 +35,7 @@ public class FillForm {
     PDAcroForm acroForm = null;
 
     public FillForm(PDDocument document) {
-        this.document = document;
-
+        this.document = document;        
     }
 
     public void addFontDefaultResources(String fontFile, int sizeFont) throws FileNotFoundException, IOException {
@@ -59,17 +58,18 @@ public class FillForm {
         }
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
-            Logger.getLogger(FillForm.class.getName()).log(Level.FINER, "name:{0}", fields.next().getPartialName());
+            Logger.getLogger(FillForm.class.getName()).log(Level.FINE, "name:{0}", fields.next().getPartialName());
         }
         if (defaultAppearanceString != null) {
             acroForm.setDefaultAppearance(defaultAppearanceString);
         }
         for (Map.Entry<String, String> item : data.entrySet()) {
             String key = item.getKey();
+            System.out.println("pre_set:"+key);
             PDField field = acroForm.getField(key);
             if (field == null) {
-                Logger.getLogger(FillForm.class.getName()).log(Level.INFO, "No field found with name:{0}", key);
-                break;
+                Logger.getLogger(FillForm.class.getName()).log(Level.FINER, "No field found with name:{0}", key);
+                continue;
             }
             if (field instanceof PDTextField) {
                 PDTextField textBox = (PDTextField) field;
@@ -77,6 +77,7 @@ public class FillForm {
                     textBox.setDefaultAppearance(defaultAppearanceString);
                 }
                 try {
+                    System.out.println("do_set:"+key+"="+item.getValue());
                     setField(key, item.getValue());
                 } catch (IllegalArgumentException iae) {
                     Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, "field:" + key, iae);
@@ -123,6 +124,7 @@ public class FillForm {
             ((PDCheckBox) field).check();
         } else if (field instanceof PDTextField) {
             field.setValue(Value);
+            System.out.println("set:"+name+"="+Value);
         }
         try {
             COSDictionary fieldDictionary = field.getCOSObject();
