@@ -66,6 +66,7 @@ import eu.europa.esig.dss.pades.CertificationPermission;
 import eu.europa.esig.dss.pades.PAdESSignatureParameters;
 import eu.europa.esig.dss.pades.SignatureFieldParameters;
 import eu.europa.esig.dss.pades.SignatureImageParameters;
+import eu.europa.esig.dss.pades.SignatureImageTextParameters;
 import eu.europa.esig.dss.pdf.AbstractPDFSignatureService;
 import eu.europa.esig.dss.pdf.DSSDictionaryCallback;
 import eu.europa.esig.dss.pdf.PAdESConstants;
@@ -82,6 +83,8 @@ import eu.europa.esig.dss.spi.x509.CertificatePool;
 import eu.europa.esig.dss.spi.x509.revocation.crl.CRLToken;
 import eu.europa.esig.dss.spi.x509.revocation.ocsp.OCSPToken;
 import eu.europa.esig.dss.utils.Utils;
+import java.awt.Color;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -91,6 +94,7 @@ import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTerminalField;
+import org.btrust.bsecuredssl.util.LocalizationUtils;
 
 public class PdfBoxSignatureService extends AbstractPDFSignatureService {
 
@@ -166,13 +170,19 @@ public class PdfBoxSignatureService extends AbstractPDFSignatureService {
 
             SignatureImageParameters imageParameters = getImageParameters(parameters);
             if (imageParameters != null && signatureDrawerFactory != null) {
+//TODO трявбад да го довършим
+                if (imageParameters.getTextParameters()==null){
+                    SignatureImageTextParameters textParameters=new SignatureImageTextParameters();
+                    textParameters.setText("TODO SignInfo");
+                    imageParameters.setTextParameters(textParameters);
+                }
                 PdfBoxSignatureDrawer signatureDrawer = (PdfBoxSignatureDrawer) signatureDrawerFactory.getSignatureDrawer(imageParameters);
+
                 signatureDrawer.init(imageParameters, pdDocument, options);
                 signatureDrawer.draw();
             }
 
             pdDocument.addSignature(pdSignature, signatureInterface, options);
-
             saveDocumentIncrementally(parameters, fileOutputStream, pdDocument);
             return digest.digest();
         } catch (IOException e) {
@@ -183,8 +193,9 @@ public class PdfBoxSignatureService extends AbstractPDFSignatureService {
     private PDSignature createSignatureDictionary(final PAdESSignatureParameters parameters, PDDocument pdDocument) {
 
         PDSignature signature;
+
         if (!timestamp && Utils.isStringNotEmpty(parameters.getSignatureFieldId())) {
-            signature = findExistingSignature(pdDocument, parameters.getSignatureFieldId());
+            signature = findExistingSignature(pdDocument, parameters);
         } else {
             signature = new PDSignature();
         }
@@ -258,8 +269,8 @@ public class PdfBoxSignatureService extends AbstractPDFSignatureService {
         return isUpdated;
     }
 
-    private PDSignature findExistingSignature(PDDocument doc, String sigFieldName) {
-        System.out.println("findExistingSignature");
+    private PDSignature findExistingSignature(PDDocument doc, PAdESSignatureParameters parameters) {
+        String sigFieldName = parameters.getSignatureFieldId();
         PDAcroForm acroForm = doc.getDocumentCatalog().getAcroForm();
         if (acroForm != null) {
             PDSignatureField signatureField = (PDSignatureField) acroForm.getField(sigFieldName);
@@ -304,6 +315,30 @@ public class PdfBoxSignatureService extends AbstractPDFSignatureService {
                         shallBeLocked = f -> false;
                     }
                     lockFields(doc.getDocumentCatalog().getAcroForm().getFields(), shallBeLocked);
+                    try {
+                        PDRectangle rect = signatureField.getWidgets().get(0).getRectangle();
+                        if (rect != null && rect.getHeight() > 0) {
+                            int pageNum = signatureField.getWidgets().get(0).getPage().getStructParents();
+                            if (pageNum < 0) {
+                                pageNum = 0;
+                            }
+                            SignatureImageParameters imageParameters = getImageParameters(parameters);
+                            if (imageParameters == null) {
+                                imageParameters = new SignatureImageParameters();
+                            }
+
+                            imageParameters.setWidth((int) rect.getWidth());
+                            imageParameters.setHeight((int) rect.getHeight());
+                            imageParameters.setxAxis(rect.getLowerLeftX());
+                            imageParameters.setyAxis(rect.getLowerLeftY());
+                            imageParameters.setPage(pageNum + 1);
+                            parameters.setSignatureImageParameters(imageParameters);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                     return signature;
                 }
             }
@@ -338,7 +373,6 @@ public class PdfBoxSignatureService extends AbstractPDFSignatureService {
      * @param accessPermissions The permission value (1, 2 or 3).
      */
     public void setMDPPermission(PDDocument doc, PDSignature signature, int accessPermissions) {
-        System.out.println("####setMDPPermission");
         COSDictionary sigDict = signature.getCOSObject();
 
         // DocMDP specific stuff
