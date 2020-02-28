@@ -96,8 +96,7 @@ public class SignAndLockExistingField {
     private PDDocument document;
     String defaultAppearanceString = null;
     PDAcroForm acroForm = null;
-    private File imageFile = new File("CertBG.png");
-    ;
+    private File imageFile = new File("CertBG.png");    
     public KeyStore ks = null;
     public PrivateKey pk = null;
     public Certificate[] chain = null;
@@ -105,15 +104,18 @@ public class SignAndLockExistingField {
     public static final COSName COS_NAME_ACTION = COSName.getPDFName("Action");
     public static final COSName COS_NAME_ALL = COSName.getPDFName("All");
     public static final COSName COS_NAME_SIG_FIELD_LOCK = COSName.getPDFName("SigFieldLock");
-
+    private PDPage signaturePage;
     public SignAndLockExistingField(PDDocument document) {
         this.document = document;
     }
-
+     
     public void signAndLock(int signatureInx, String reason, OutputStream output) throws IOException {
         SignatureInterface signatureInterface = data -> this.signWithSeparatedHashing(data);
         PDSignatureField signatureField = getDocument().getSignatureFields().get(signatureInx);
-        int pageNum = signatureField.getWidgets().get(0).getPage().getStructParents();
+//        int pageNum = signatureField.getWidgets().get(0).getPage().getStructParents();
+//        System.out.println("1pageNum = " + pageNum);
+//        if (pageNum<0) pageNum=0;
+        signaturePage=signatureField.getWidgets().get(0).getPage();
         PDSignature signature = new PDSignature();
         signatureField.setValue(signature);
 
@@ -154,7 +156,9 @@ public class SignAndLockExistingField {
         }
 
         signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE);
-        signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);
+        COSName SUBFILTER_ETSI_CADES_DETACHED  = COSName.getPDFName("ETSI.CAdES.detached");
+      //  signature.setSubFilter(SUBFILTER_ETSI_CADES_DETACHED);
+      signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);
         X509Certificate cert = (X509Certificate) chain[0];
         // https://stackoverflow.com/questions/2914521/
         X500Name x500Name = new X500Name(cert.getSubjectX500Principal().getName());
@@ -168,9 +172,9 @@ public class SignAndLockExistingField {
         try {
             // register signature dictionary and sign interface
 
-            signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(), pageNum, rect, signature));
+            signatureOptions.setVisualSignature(createVisualSignatureTemplate(getDocument(),  rect, signature));
 
-            signatureOptions.setPage(pageNum);
+           // signatureOptions.setPage(pageNum);
 
             getDocument().addSignature(signature, signatureInterface, signatureOptions);
             ExternalSigningSupport externalSigning
@@ -259,11 +263,12 @@ public class SignAndLockExistingField {
         }
     }
 
-    private InputStream createVisualSignatureTemplate(PDDocument srcDoc, int pageNum,
+    private InputStream createVisualSignatureTemplate(PDDocument srcDoc,
                     PDRectangle rect, PDSignature signature) throws IOException {
         try (PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage(srcDoc.getPage(pageNum).getMediaBox());
-            doc.addPage(page);
+//            System.out.println("pageNum = " + pageNum);
+//            PDPage page = new PDPage(srcDoc.getPage(pageNum).getMediaBox());
+//            doc.addPage(page);
             PDAcroForm in_acroForm = new PDAcroForm(doc);
             doc.getDocumentCatalog().setAcroForm(in_acroForm);
             PDSignatureField signatureField = new PDSignatureField(in_acroForm);
@@ -286,7 +291,7 @@ public class SignAndLockExistingField {
 
             float height = bbox.getHeight();
             Matrix initialScale = null;
-            switch (srcDoc.getPage(pageNum).getRotation()) {
+            switch (signaturePage.getRotation()) {
                 case 90:
                     form.setMatrix(AffineTransform.getQuadrantRotateInstance(1));
                     initialScale = Matrix.getScaleInstance(bbox.getWidth() / bbox.getHeight(), bbox.getHeight() / bbox.getWidth());

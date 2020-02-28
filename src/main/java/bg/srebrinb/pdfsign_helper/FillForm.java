@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
@@ -56,6 +57,17 @@ public class FillForm {
         if (null == acroForm) {
             acroForm = getDocument().getDocumentCatalog().getAcroForm();
         }
+        
+        // vvv--- new 
+COSDictionary dictionary = getDocument().getDocumentCatalog().getCOSObject();
+dictionary.setNeedToBeUpdated(true);
+dictionary = (COSDictionary) dictionary.getDictionaryObject(COSName.ACRO_FORM);
+dictionary.setNeedToBeUpdated(true);
+COSArray array = (COSArray) dictionary.getDictionaryObject(COSName.FIELDS);
+array.setNeedToBeUpdated(true);
+// ^^^--- new 
+        
+
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
             Logger.getLogger(FillForm.class.getName()).log(Level.FINE, "name:{0}", fields.next().getPartialName());
@@ -64,8 +76,7 @@ public class FillForm {
             acroForm.setDefaultAppearance(defaultAppearanceString);
         }
         for (Map.Entry<String, String> item : data.entrySet()) {
-            String key = item.getKey();
-            System.out.println("pre_set:"+key);
+            String key = item.getKey();            
             PDField field = acroForm.getField(key);
             if (field == null) {
                 Logger.getLogger(FillForm.class.getName()).log(Level.FINER, "No field found with name:{0}", key);
@@ -76,8 +87,7 @@ public class FillForm {
                 if (null != defaultAppearanceString) {
                     textBox.setDefaultAppearance(defaultAppearanceString);
                 }
-                try {
-                    System.out.println("do_set:"+key+"="+item.getValue());
+                try {                    
                     setField(key, item.getValue());
                 } catch (IllegalArgumentException iae) {
                     Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, "field:" + key, iae);
@@ -123,8 +133,7 @@ public class FillForm {
         if (field instanceof PDCheckBox) {
             ((PDCheckBox) field).check();
         } else if (field instanceof PDTextField) {
-            field.setValue(Value);
-            System.out.println("set:"+name+"="+Value);
+            field.setValue(Value);            
         }
         try {
             COSDictionary fieldDictionary = field.getCOSObject();
@@ -139,7 +148,7 @@ public class FillForm {
                 }
             }
         } catch (Exception ex) {
-            Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, name, ex);
         }
     }
 }

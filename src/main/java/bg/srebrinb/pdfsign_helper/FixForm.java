@@ -25,7 +25,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 public class FixForm {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("zaiavleniePPF_ZP.pdf");
+        File file = new File("all/dogovorUPF.pdf");
         PDDocument document = PDDocument.load(file);
         PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ariblk.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
         PDResources resources = new PDResources();
@@ -48,7 +48,7 @@ public class FixForm {
             }
         }
         //acroForm.setNeedAppearances(true);
-        document.save("fix_zaiavleniePPF_ZP.pdf");
+        document.save("dogovorUPF.pdf");
 
     }
 }
