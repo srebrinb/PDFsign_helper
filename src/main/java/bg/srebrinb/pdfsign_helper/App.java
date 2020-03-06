@@ -37,19 +37,22 @@ public class App {
     
     public static void main(String[] args) throws IOException {
         
-        String dataFile = "all/dogovor_data_1.json";
-        String dataFile2 = "all/dogovor_data_2.json";
+        String dataFile = "all/zaiavlenie_data_1.json";
+        String dataFile2 = "all/zaiavlenie_data_2.json";
         App app = new App();
-        File file = new File("all/dogovorPPF.pdf");
+        File file = new File("all/zaiavleniePPF.pdf");
         // File file = new File("all/dogovorPPF.pdf");
         app.document = PDDocument.load(file);
         Map<String, String> data = app.getData(dataFile);
         
         PDDocument result = FillForm.fastPopulate(app.document, data);
-        ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+        FileOutputStream tmp = new FileOutputStream("FillForm_1.pdf");
         result.saveIncremental(tmp);
         result.close();
-        PDDocument tmpPDD = PDDocument.load(tmp.toByteArray());
+        tmp.close();
+        FileInputStream tmpInS = new FileInputStream("FillForm_1.pdf");
+
+        PDDocument tmpPDD = PDDocument.load(tmpInS);
         Long signatureInx = app.getSignIdx(dataFile);
         String reason = "reason Text";
         SignAndLockExistingField signAndLockExistingField = new SignAndLockExistingField(tmpPDD);

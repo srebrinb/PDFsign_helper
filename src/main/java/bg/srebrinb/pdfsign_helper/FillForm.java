@@ -36,7 +36,7 @@ public class FillForm {
     PDAcroForm acroForm = null;
 
     public FillForm(PDDocument document) {
-        this.document = document;        
+        this.document = document;
     }
 
     public void addFontDefaultResources(String fontFile, int sizeFont) throws FileNotFoundException, IOException {
@@ -57,16 +57,15 @@ public class FillForm {
         if (null == acroForm) {
             acroForm = getDocument().getDocumentCatalog().getAcroForm();
         }
-        
+
         // vvv--- new 
-COSDictionary dictionary = getDocument().getDocumentCatalog().getCOSObject();
-dictionary.setNeedToBeUpdated(true);
-dictionary = (COSDictionary) dictionary.getDictionaryObject(COSName.ACRO_FORM);
-dictionary.setNeedToBeUpdated(true);
-COSArray array = (COSArray) dictionary.getDictionaryObject(COSName.FIELDS);
-array.setNeedToBeUpdated(true);
+        COSDictionary dictionary = getDocument().getDocumentCatalog().getCOSObject();
+        dictionary.setNeedToBeUpdated(true);
+        dictionary = (COSDictionary) dictionary.getDictionaryObject(COSName.ACRO_FORM);
+        dictionary.setNeedToBeUpdated(true);
+        COSArray array = (COSArray) dictionary.getDictionaryObject(COSName.FIELDS);
+        array.setNeedToBeUpdated(true);
 // ^^^--- new 
-        
 
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
@@ -76,7 +75,7 @@ array.setNeedToBeUpdated(true);
             acroForm.setDefaultAppearance(defaultAppearanceString);
         }
         for (Map.Entry<String, String> item : data.entrySet()) {
-            String key = item.getKey();            
+            String key = item.getKey();
             PDField field = acroForm.getField(key);
             if (field == null) {
                 Logger.getLogger(FillForm.class.getName()).log(Level.FINER, "No field found with name:{0}", key);
@@ -87,7 +86,7 @@ array.setNeedToBeUpdated(true);
                 if (null != defaultAppearanceString) {
                     textBox.setDefaultAppearance(defaultAppearanceString);
                 }
-                try {                    
+                try {
                     setField(key, item.getValue());
                 } catch (IllegalArgumentException iae) {
                     Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, "field:" + key, iae);
@@ -125,28 +124,29 @@ array.setNeedToBeUpdated(true);
     }
 
     public void setField(String name, String Value) throws IOException {
-
         PDField field = acroForm.getField(name);
         if (field == null) {
             return;
         }
         if (field instanceof PDCheckBox) {
-            ((PDCheckBox) field).check();
+            field.setValue("On");
         } else if (field instanceof PDTextField) {
-            field.setValue(Value);            
+            field.setValue(Value);
         }
         try {
             COSDictionary fieldDictionary = field.getCOSObject();
             COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
-            dictionary.setNeedToBeUpdated(true);
+            dictionary.setNeedToBeUpdated(true);            
             if (field instanceof PDTextField) {
-                COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
-                stream.setNeedToBeUpdated(true);
-                while (fieldDictionary != null) {
-                    fieldDictionary.setNeedToBeUpdated(true);
-                    fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
-                }
+                COSStream stream  = (COSStream) dictionary.getDictionaryObject(COSName.N);
+                stream.setNeedToBeUpdated(true);                
             }
+
+            while (fieldDictionary != null) {
+                fieldDictionary.setNeedToBeUpdated(true);
+                fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);
+            }
+
         } catch (Exception ex) {
             Logger.getLogger(FillForm.class.getName()).log(Level.SEVERE, name, ex);
         }
