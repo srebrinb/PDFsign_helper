@@ -5,6 +5,7 @@
  */
 package bg.srebrinb.pdfsign_helper;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDPushButton;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 
 /**
@@ -136,12 +138,30 @@ public class FillForm {
         try {
             COSDictionary fieldDictionary = field.getCOSObject();
             COSDictionary dictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.AP);
-            dictionary.setNeedToBeUpdated(true);            
-            if (field instanceof PDTextField) {
-                COSStream stream  = (COSStream) dictionary.getDictionaryObject(COSName.N);
-                stream.setNeedToBeUpdated(true);                
-            }
+            if (dictionary == null) {
+                COSArray kids = (COSArray) fieldDictionary.getDictionaryObject(COSName.KIDS);
+                for (int i = 0; i < kids.size(); ++i) {
+                    COSDictionary tmp = (COSDictionary) kids.getObject(i);
+                    dictionary = (COSDictionary) tmp.getDictionaryObject(COSName.AP);
+                    dictionary.setNeedToBeUpdated(true);
+                    if (field instanceof PDTextField) {
+                        COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+                        stream.setNeedToBeUpdated(true);
+                    }
+                    while (tmp != null) {
+                        tmp.setNeedToBeUpdated(true);
+                        tmp = (COSDictionary) tmp.getDictionaryObject(COSName.PARENT);
+                    }
+                }
+            } else {
+                dictionary.setNeedToBeUpdated(true);
 
+                if (field instanceof PDTextField) {
+
+                    COSStream stream = (COSStream) dictionary.getDictionaryObject(COSName.N);
+                    stream.setNeedToBeUpdated(true);
+                }
+            }
             while (fieldDictionary != null) {
                 fieldDictionary.setNeedToBeUpdated(true);
                 fieldDictionary = (COSDictionary) fieldDictionary.getDictionaryObject(COSName.PARENT);

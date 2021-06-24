@@ -25,7 +25,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 public class FixForm {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("all/dogovorUPF.pdf");
+        File file = new File("new/Contract QES BG.pdf");
         PDDocument document = PDDocument.load(file);
         PDFont font = PDType0Font.load(document, new FileInputStream("fonts/ariblk.ttf"), false); // check that the font has what you need; ARIALUNI.TTF is good but huge
         PDResources resources = new PDResources();
@@ -33,7 +33,7 @@ public class FixForm {
         PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();        
         acroForm.setDefaultResources(resources);
         
-        String defaultAppearanceString = String.format("/arialbd %d Tf 0 g", 7);
+        String defaultAppearanceString = String.format("/arialbd %d Tf 0 g", 8);
         Iterator<PDField> fields = acroForm.getFieldIterator();
         while (fields.hasNext()) {
           //  System.out.println("name:" + fields.next().getPartialName());
@@ -48,7 +48,7 @@ public class FixForm {
             }
         }
         //acroForm.setNeedAppearances(true);
-        document.save("dogovorUPF.pdf");
+        document.save("fix/Contract QES BG.pdf");
 
     }
 }

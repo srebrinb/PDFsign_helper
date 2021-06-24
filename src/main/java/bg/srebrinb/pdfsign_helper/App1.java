@@ -29,16 +29,15 @@ import org.json.simple.parser.JSONParser;
  *
  * @author sbalabanov
  */
-public class App {
+public class App1 {
     
     private PDDocument document;
     
     public static void main(String[] args) throws IOException {
-        String fileIn="20zaiavleniePPF";
-        String dataFile = "all/"+fileIn+"_data_1.json";
-        String dataFile2 = "all/"+fileIn+"_data_2.json";
-        App app = new App();
-        fileIn="toplina_ppf_application";
+        String fileIn="requestQES";
+        String dataFile = "all/requestQES.json";
+        String dataFile2 = "all/requestQES.json";
+        App1 app = new App1();
         File file = new File(new String("all/"+fileIn+".pdf"));
         // File file = new File("all/dogovorPPF.pdf");
         app.document = PDDocument.load(file);
@@ -58,22 +57,22 @@ public class App {
         try {
             signAndLockExistingField.setKeyStore("test.pfx", "1234".toCharArray());
         } catch (KeyStoreException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(App1.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(App1.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(App1.class.getName()).log(Level.SEVERE, null, ex);
         } catch (CertificateException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(App1.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UnrecoverableKeyException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(App1.class.getName()).log(Level.SEVERE, null, ex);
         }
         OutputStream output = new FileOutputStream("sign_1.pdf");
         signAndLockExistingField.signAndLock(signatureInx.intValue(), reason, output);
         output.close();
         
         data = app.getData(dataFile2);
-        signatureInx = app.getSignIdx(dataFile2);
+        signatureInx = (long)1;//app.getSignIdx(dataFile2);
 
         // fillForm.setDocument(PDDocument.load(new File("sign_1.pdf")));
         FillForm fillFormNew = new FillForm(PDDocument.load(new File("sign_1.pdf")));

@@ -9,7 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <pdfbox.version>[2.0.0,3.0.0)</pdfbox.version>
+        <pdfbox.version>2.0.19</pdfbox.version>
         <bc.version>1.54</bc.version>
     </properties>
     <dependencies>
@@ -49,5 +49,21 @@
     <artifactId>json-simple</artifactId>
     <version>1.1.1</version>
 </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.3.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>1.24</version>
+        </dependency>
     </dependencies>
 </project>
